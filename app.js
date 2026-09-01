@@ -1,0 +1,585 @@
+import { ArtworkVisualizer } from "./visualizer.js?v=20260901-1";
+import { resolveReleaseArtwork, resolveTrackAudio } from "./media-provider.js?v=20260901-1";
+
+const elements = {
+  audio: document.querySelector("#audio"),
+  identityMark: document.querySelector("#identity-mark"),
+  identityName: document.querySelector("#identity-name"),
+  identitySubtitle: document.querySelector("#identity-subtitle"),
+  railBrand: document.querySelector("#rail-brand"),
+  artistName: document.querySelector("#artist-name"),
+  trackTotal: document.querySelector("#track-total"),
+  releaseTotal: document.querySelector("#release-total"),
+  runtimeTotal: document.querySelector("#runtime-total"),
+  railTrackCount: document.querySelector("#rail-track-count"),
+  stage: document.querySelector("#visual-stage"),
+  canvas: document.querySelector("#visualizer-canvas"),
+  artWash: document.querySelector("#art-wash"),
+  stageCover: document.querySelector("#stage-cover"),
+  releaseYear: document.querySelector("#release-year"),
+  releaseName: document.querySelector("#release-name"),
+  trackList: document.querySelector("#track-list"),
+  catalogRail: document.querySelector("#catalog-rail"),
+  trackTitle: document.querySelector("#track-title"),
+  nowRelease: document.querySelector("#now-release"),
+  playbackStatus: document.querySelector("#playback-status"),
+  trackPosition: document.querySelector("#track-position"),
+  releaseCount: document.querySelector("#release-count"),
+  releaseLink: document.querySelector("#release-link"),
+  rightsCredit: document.querySelector("#rights-credit"),
+  trackSourceLink: document.querySelector("#track-source-link"),
+  catalogRights: document.querySelector("#catalog-rights"),
+  archiveCredit: document.querySelector("#archive-credit"),
+  paletteSwatches: document.querySelector("#palette-swatches"),
+  playButton: document.querySelector("#play-button"),
+  previousButton: document.querySelector("#previous-button"),
+  nextButton: document.querySelector("#next-button"),
+  seek: document.querySelector("#seek"),
+  elapsed: document.querySelector("#elapsed"),
+  duration: document.querySelector("#duration"),
+  muteButton: document.querySelector("#mute-button"),
+  volume: document.querySelector("#volume"),
+  volumeValue: document.querySelector("#volume-value"),
+  shareButton: document.querySelector("#share-button"),
+  queueButton: document.querySelector("#queue-button"),
+  queueClose: document.querySelector("#queue-close"),
+  queueBackdrop: document.querySelector("#queue-backdrop"),
+  intensityButtons: [...document.querySelectorAll("[data-intensity]")],
+  fullscreenButton: document.querySelector("#fullscreen-button"),
+  toast: document.querySelector("#toast"),
+  themeColor: document.querySelector('meta[name="theme-color"]'),
+  bassMeter: document.querySelector("#bass-meter"),
+  midMeter: document.querySelector("#mid-meter"),
+  trebleMeter: document.querySelector("#treble-meter")
+};
+
+const state = {
+  catalog: null,
+  releases: new Map(),
+  currentIndex: 0,
+  isSeeking: false,
+  wasPlayingBeforeSeek: false,
+  lastVolume: 0.82,
+  visualIntensity: "high",
+  toastTimer: null
+};
+
+const visualizer = new ArtworkVisualizer({
+  canvas: elements.canvas,
+  audio: elements.audio,
+  stage: elements.stage,
+  meters: {
+    bass: elements.bassMeter,
+    mids: elements.midMeter,
+    treble: elements.trebleMeter
+  }
+});
+
+function formatTime(seconds, roundSeconds = false) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const wholeSeconds = roundSeconds ? Math.round(seconds) : Math.floor(seconds);
+  const minutes = Math.floor(wholeSeconds / 60);
+  const remaining = wholeSeconds % 60;
+  return `${minutes}:${remaining.toString().padStart(2, "0")}`;
+}
+
+function releaseDisplayName(release) {
+  return release.displayTitle || release.title;
+}
+
+function artworkPath(release) {
+  return resolveReleaseArtwork(state.catalog, release);
+}
+
+function trackRights(track) {
+  return { ...state.catalog.rights?.defaults, ...track.rights };
+}
+
+function updateRights(track) {
+  const rights = trackRights(track);
+  elements.rightsCredit.textContent = rights.credit || "Rights information unavailable.";
+  elements.trackSourceLink.href = rights.sourceUrl || track.youtubeUrl;
+  elements.trackSourceLink.textContent = rights.sourceLabel || "Track source ↗";
+}
+
+function hydrateCatalogChrome() {
+  const artistName = state.catalog.artist?.name || "Personal library";
+  const initials = artistName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "RG";
+  const trackCount = state.catalog.tracks.length;
+  const releaseCount = state.catalog.releases.length;
+  const runtimeSeconds = state.catalog.tracks.reduce((total, track) => total + (track.durationMs || 0), 0) / 1000;
+  elements.identityMark.textContent = initials;
+  elements.identityName.textContent = artistName;
+  elements.identitySubtitle.textContent = state.catalog.subtitle || "Artwork-reactive library";
+  elements.railBrand.textContent = artistName;
+  elements.artistName.textContent = artistName;
+  elements.trackTotal.textContent = String(trackCount).padStart(2, "0");
+  elements.releaseTotal.textContent = String(releaseCount).padStart(2, "0");
+  elements.runtimeTotal.textContent = formatTime(runtimeSeconds, true);
+  elements.railTrackCount.textContent = String(trackCount).padStart(2, "0");
+  elements.railTrackCount.setAttribute("aria-label", `${trackCount} tracks`);
+}
+
+function showToast(message) {
+  window.clearTimeout(state.toastTimer);
+  elements.toast.textContent = message;
+  elements.toast.classList.add("is-visible");
+  state.toastTimer = window.setTimeout(() => elements.toast.classList.remove("is-visible"), 1800);
+}
+
+function downloadCalibration() {
+  const capture = visualizer.exportTelemetry();
+  const trackId = capture.frames.at(-1)?.trackId || state.catalog?.tracks[state.currentIndex]?.id || "session";
+  const blob = new Blob([JSON.stringify(capture, null, 2)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `rg-player-${trackId}-visualizer-telemetry.json`;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(link.href), 0);
+}
+
+function setStatus(message) {
+  elements.playbackStatus.textContent = message;
+}
+
+function setVisualIntensity(mode, { persist = true } = {}) {
+  const normalized = mode === "standard" ? "standard" : "high";
+  state.visualIntensity = normalized;
+  visualizer.setIntensity(normalized === "high" ? 1.72 : 1);
+  elements.intensityButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.intensity === normalized));
+  });
+
+  if (persist) {
+    try {
+      localStorage.setItem("rg-player-visual-intensity", normalized);
+    } catch {
+      // The preference is optional; the visualizer still defaults to High.
+    }
+  }
+}
+
+function setQueueOpen(open, { restoreFocus = false } = {}) {
+  const expanded = Boolean(open);
+  document.body.dataset.queueOpen = String(expanded);
+  elements.queueButton.setAttribute("aria-expanded", String(expanded));
+  elements.catalogRail.setAttribute("aria-hidden", String(!expanded && window.innerWidth <= 900));
+
+  if (expanded) {
+    requestAnimationFrame(() => elements.queueClose.focus({ preventScroll: true }));
+  } else if (restoreFocus) {
+    elements.queueButton.focus({ preventScroll: true });
+  }
+}
+
+function applyPalette(release) {
+  const root = document.documentElement;
+  const palette = release.palette;
+  root.style.setProperty("--bg", palette.background);
+  root.style.setProperty("--surface", palette.surface);
+  root.style.setProperty("--primary", palette.primary);
+  root.style.setProperty("--secondary", palette.secondary);
+  root.style.setProperty("--accent", palette.accent);
+  root.style.setProperty("--highlight", palette.highlight);
+  root.style.setProperty("--artwork-image", `url("${artworkPath(release)}")`);
+  elements.themeColor.setAttribute("content", palette.background);
+  visualizer.setPalette(palette);
+
+  elements.paletteSwatches.replaceChildren(...palette.colors.map((color) => {
+    const swatch = document.createElement("span");
+    swatch.className = "palette-swatch";
+    swatch.dataset.color = color;
+    swatch.style.backgroundColor = color;
+    swatch.setAttribute("title", color);
+    return swatch;
+  }));
+}
+
+function updateMediaSession(track, release) {
+  if (!("mediaSession" in navigator) || !("MediaMetadata" in window)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: track.title,
+    artist: track.artist,
+    album: releaseDisplayName(release),
+    artwork: [
+      {
+        src: new URL(artworkPath(release), window.location.href).href,
+        sizes: `${release.artwork.width || 1200}x${release.artwork.height || 1200}`,
+        type: release.artwork.mimeType || "image/jpeg"
+      }
+    ]
+  });
+}
+
+function updateTrackButtons() {
+  elements.trackList.querySelectorAll(".track-select").forEach((button, index) => {
+    button.setAttribute("aria-current", String(index === state.currentIndex));
+  });
+}
+
+function updateUrl(track) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("track", track.id);
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function transitionCover(release, track) {
+  elements.stageCover.classList.add("is-changing");
+  const image = new Image();
+  image.onload = () => {
+    elements.stageCover.src = artworkPath(release);
+    elements.stageCover.alt = `${release.title} cover art`;
+    requestAnimationFrame(() => elements.stageCover.classList.remove("is-changing"));
+  };
+  image.onerror = () => elements.stageCover.classList.remove("is-changing");
+  image.src = artworkPath(release);
+  elements.stageCover.dataset.track = track.id;
+}
+
+async function selectTrack(index, { autoplay = false, updateHistory = true } = {}) {
+  const tracks = state.catalog.tracks;
+  const boundedIndex = (index + tracks.length) % tracks.length;
+  const track = tracks[boundedIndex];
+  const release = state.releases.get(track.releaseId);
+  const releaseIndex = state.catalog.releases.findIndex((candidate) => candidate.id === release.id);
+  const changedTrack = boundedIndex !== state.currentIndex || !elements.audio.src;
+
+  state.currentIndex = boundedIndex;
+  visualizer.setTrack(boundedIndex, tracks.length, track.id);
+  applyPalette(release);
+  updateTrackButtons();
+  transitionCover(release, track);
+
+  elements.trackTitle.textContent = track.title;
+  elements.nowRelease.textContent = releaseDisplayName(release);
+  elements.releaseYear.textContent = release.releaseDate.slice(0, 4);
+  elements.releaseName.textContent = releaseDisplayName(release);
+  elements.trackPosition.textContent = `${String(boundedIndex + 1).padStart(2, "0")} / ${String(tracks.length).padStart(2, "0")}`;
+  elements.releaseCount.textContent = `Release ${String(releaseIndex + 1).padStart(2, "0")} / ${String(state.catalog.releases.length).padStart(2, "0")}`;
+  elements.releaseLink.href = release.sourceUrl || track.rights?.sourceUrl || track.youtubeUrl;
+  updateRights(track);
+  elements.duration.textContent = formatTime(track.durationMs / 1000, track.durationMs % 1000 !== 0);
+  elements.duration.dateTime = track.durationIso;
+  elements.playButton.setAttribute("aria-label", `Play ${track.title}`);
+  document.title = `${track.title} — ${track.artist} · RG Player`;
+  updateMediaSession(track, release);
+  if (updateHistory) updateUrl(track);
+
+  if (changedTrack) {
+    elements.seek.value = "0";
+    elements.seek.style.setProperty("--range-fill", "0%");
+    elements.elapsed.textContent = "0:00";
+    elements.audio.src = resolveTrackAudio(state.catalog, track);
+    elements.audio.load();
+    setStatus("Loading library audio");
+  }
+
+  if (window.innerWidth <= 900) setQueueOpen(false);
+
+  if (autoplay) {
+    try {
+      await startPlayback();
+    } catch (error) {
+      reportPlaybackError(error);
+    }
+  }
+}
+
+function buildTrackList() {
+  const items = state.catalog.tracks.map((track, index) => {
+    const release = state.releases.get(track.releaseId);
+    const item = document.createElement("li");
+    item.className = "track-item";
+
+    const button = document.createElement("button");
+    button.className = "track-select";
+    button.type = "button";
+    button.dataset.trackId = track.id;
+    button.style.setProperty("--track-primary", release.palette.primary);
+    button.style.setProperty("--track-accent", release.palette.accent);
+    button.style.setProperty("--track-highlight", release.palette.highlight);
+    button.setAttribute("aria-current", String(index === state.currentIndex));
+    button.setAttribute("aria-label", `Play ${track.title}`);
+    button.innerHTML = `
+      <span class="track-thumb"><img src="${artworkPath(release)}" alt="" loading="lazy" decoding="async"></span>
+      <span class="track-number">${String(index + 1).padStart(2, "0")}</span>
+      <span class="track-copy">
+        <strong>${track.title}</strong>
+        <small>${release.releaseDate.slice(0, 4)} · ${release.title}</small>
+      </span>
+      <span class="track-duration">${formatTime(track.durationMs / 1000, true)}</span>
+    `;
+    button.addEventListener("click", () => selectTrack(index, { autoplay: true }));
+    item.append(button);
+    return item;
+  });
+  elements.trackList.replaceChildren(...items);
+}
+
+function reportPlaybackError(error) {
+  const mediaError = elements.audio.error;
+  if (error?.name === "NotAllowedError") setStatus("Tap play once more");
+  else if (error?.name === "NotSupportedError" || mediaError?.code === 4) setStatus("This audio file could not play");
+  else setStatus("Playback failed — retry");
+  console.error("RG Player playback failed.", { error, mediaError });
+}
+
+async function startPlayback() {
+  // Keep audio.play() in the original tap stack. Mobile Safari can discard the
+  // user activation if Web Audio setup is awaited before native playback.
+  const playbackAttempt = elements.audio.play();
+  const analysisAttempt = visualizer.connect().catch((error) => {
+    console.warn("Playback started without audio analysis.", error);
+    return false;
+  });
+
+  await playbackAttempt;
+  await analysisAttempt;
+}
+
+async function togglePlayback() {
+  if (elements.audio.paused) {
+    try {
+      await startPlayback();
+    } catch (error) {
+      reportPlaybackError(error);
+    }
+  } else {
+    elements.audio.pause();
+  }
+}
+
+function seekFromControl() {
+  if (!Number.isFinite(elements.audio.duration)) return;
+  elements.audio.currentTime = (Number(elements.seek.value) / 1000) * elements.audio.duration;
+}
+
+function updateTimeline() {
+  if (!state.isSeeking && Number.isFinite(elements.audio.duration) && elements.audio.duration > 0) {
+    const progress = elements.audio.currentTime / elements.audio.duration;
+    elements.seek.value = String(Math.round(progress * 1000));
+    elements.seek.style.setProperty("--range-fill", `${progress * 100}%`);
+  }
+  elements.elapsed.textContent = formatTime(elements.audio.currentTime);
+  elements.elapsed.dateTime = `PT${Math.max(0, Math.floor(elements.audio.currentTime))}S`;
+}
+
+function setVolume(value) {
+  const normalized = Math.max(0, Math.min(1, Number(value)));
+  elements.audio.volume = normalized;
+  elements.audio.muted = normalized === 0;
+  if (normalized > 0) state.lastVolume = normalized;
+  elements.volume.value = String(normalized);
+  elements.volume.style.setProperty("--range-fill", `${normalized * 100}%`);
+  elements.volumeValue.textContent = String(Math.round(normalized * 100));
+  elements.muteButton.setAttribute("aria-label", normalized === 0 ? "Restore volume" : "Mute");
+}
+
+function toggleMute() {
+  if (elements.audio.muted || elements.audio.volume === 0) setVolume(state.lastVolume || 0.82);
+  else setVolume(0);
+}
+
+async function shareCurrentTrack() {
+  const track = state.catalog.tracks[state.currentIndex];
+  const release = state.releases.get(track.releaseId);
+  const url = new URL(window.location.href);
+  url.searchParams.set("track", track.id);
+  const shareData = {
+    title: `${track.title} — ${track.artist}`,
+    text: `${track.title} by ${track.artist} · ${releaseDisplayName(release)} · RG Player`,
+    url: url.href
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+    await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+    showToast("Track link copied");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("Share was not available");
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await elements.stage.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    showToast("Full view is not available here");
+  }
+}
+
+function bindMediaActions() {
+  if (!("mediaSession" in navigator)) return;
+  const actions = {
+    play: () => startPlayback().catch(reportPlaybackError),
+    pause: () => elements.audio.pause(),
+    previoustrack: () => selectTrack(state.currentIndex - 1, { autoplay: true }),
+    nexttrack: () => selectTrack(state.currentIndex + 1, { autoplay: true }),
+    seekto: ({ seekTime }) => {
+      if (Number.isFinite(seekTime)) elements.audio.currentTime = seekTime;
+    }
+  };
+  Object.entries(actions).forEach(([action, handler]) => {
+    try {
+      navigator.mediaSession.setActionHandler(action, handler);
+    } catch {
+      // Unsupported Media Session actions are optional.
+    }
+  });
+}
+
+function bindEvents() {
+  elements.playButton.addEventListener("click", togglePlayback);
+  elements.previousButton.addEventListener("click", () => selectTrack(state.currentIndex - 1, { autoplay: !elements.audio.paused }));
+  elements.nextButton.addEventListener("click", () => selectTrack(state.currentIndex + 1, { autoplay: !elements.audio.paused }));
+  elements.shareButton.addEventListener("click", shareCurrentTrack);
+  elements.fullscreenButton.addEventListener("click", toggleFullscreen);
+  elements.muteButton.addEventListener("click", toggleMute);
+  elements.queueButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const opening = document.body.dataset.queueOpen !== "true";
+    setQueueOpen(opening, { restoreFocus: !opening });
+  });
+  elements.queueClose.addEventListener("click", () => setQueueOpen(false, { restoreFocus: true }));
+  elements.queueBackdrop.addEventListener("click", () => setQueueOpen(false, { restoreFocus: true }));
+  elements.intensityButtons.forEach((button) => {
+    button.addEventListener("click", () => setVisualIntensity(button.dataset.intensity));
+  });
+  elements.seek.addEventListener("pointerdown", () => {
+    state.isSeeking = true;
+    state.wasPlayingBeforeSeek = !elements.audio.paused;
+  });
+  elements.seek.addEventListener("input", () => {
+    const progress = Number(elements.seek.value) / 1000;
+    elements.seek.style.setProperty("--range-fill", `${progress * 100}%`);
+    if (Number.isFinite(elements.audio.duration)) elements.elapsed.textContent = formatTime(progress * elements.audio.duration);
+  });
+  elements.seek.addEventListener("change", () => {
+    seekFromControl();
+    state.isSeeking = false;
+  });
+  elements.seek.addEventListener("pointerup", () => {
+    seekFromControl();
+    state.isSeeking = false;
+  });
+
+  elements.volume.addEventListener("input", () => setVolume(elements.volume.value));
+
+  elements.audio.addEventListener("loadstart", () => setStatus("Loading library audio"));
+  elements.audio.addEventListener("canplay", () => {
+    if (elements.audio.paused) setStatus("Ready to play");
+  });
+  elements.audio.addEventListener("playing", () => {
+    document.body.dataset.playing = "true";
+    setStatus("Audio reactive");
+    elements.playButton.setAttribute("aria-label", "Pause");
+  });
+  elements.audio.addEventListener("pause", () => {
+    document.body.dataset.playing = "false";
+    if (!elements.audio.ended) setStatus("Paused");
+    const track = state.catalog.tracks[state.currentIndex];
+    elements.playButton.setAttribute("aria-label", `Play ${track.title}`);
+  });
+  elements.audio.addEventListener("timeupdate", updateTimeline);
+  elements.audio.addEventListener("durationchange", () => {
+    if (Number.isFinite(elements.audio.duration)) {
+      elements.duration.textContent = formatTime(elements.audio.duration, elements.audio.duration % 1 !== 0);
+    }
+  });
+  elements.audio.addEventListener("ended", () => selectTrack(state.currentIndex + 1, { autoplay: true }));
+  elements.audio.addEventListener("error", () => {
+    document.body.dataset.playing = "false";
+    setStatus("Audio unavailable");
+  });
+
+  document.addEventListener("fullscreenchange", () => {
+    const active = document.fullscreenElement === elements.stage;
+    elements.fullscreenButton.setAttribute("aria-label", active ? "Leave full visualizer view" : "Enter full visualizer view");
+    requestAnimationFrame(() => visualizer.resize());
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const target = event.target;
+    const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLButtonElement;
+    if (event.code === "Space" && !isTyping) {
+      event.preventDefault();
+      togglePlayback();
+    } else if (event.key === "ArrowLeft" && !isTyping) {
+      selectTrack(state.currentIndex - 1, { autoplay: !elements.audio.paused });
+    } else if (event.key === "ArrowRight" && !isTyping) {
+      selectTrack(state.currentIndex + 1, { autoplay: !elements.audio.paused });
+    } else if (event.key.toLowerCase() === "m" && !isTyping) {
+      toggleMute();
+    } else if (event.key.toLowerCase() === "f" && !isTyping) {
+      toggleFullscreen();
+    } else if (event.key === "Escape" && document.body.dataset.queueOpen === "true") {
+      setQueueOpen(false, { restoreFocus: true });
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 900) {
+      document.body.dataset.queueOpen = "false";
+      elements.catalogRail.removeAttribute("aria-hidden");
+      elements.queueButton.setAttribute("aria-expanded", "false");
+    } else if (document.body.dataset.queueOpen !== "true") {
+      elements.catalogRail.setAttribute("aria-hidden", "true");
+    }
+  });
+}
+
+async function initialize() {
+  try {
+    const response = await fetch("data/library.json", { cache: "no-store" });
+    if (!response.ok) throw new Error(`Catalog request failed: ${response.status}`);
+    state.catalog = await response.json();
+    state.releases = new Map(state.catalog.releases.map((release) => [release.id, release]));
+    hydrateCatalogChrome();
+    elements.catalogRights.textContent = state.catalog.rights?.defaults?.credit || "Music rights remain with their respective owner.";
+    elements.archiveCredit.textContent = state.catalog.rights?.archiveCredit || "Archive and player by RG.";
+
+    const requestedTrackId = new URL(window.location.href).searchParams.get("track");
+    const requestedIndex = state.catalog.tracks.findIndex((track) => track.id === requestedTrackId);
+    state.currentIndex = requestedIndex >= 0 ? requestedIndex : 0;
+
+    buildTrackList();
+    bindEvents();
+    bindMediaActions();
+    setVolume(0.82);
+    let savedIntensity = "high";
+    try {
+      savedIntensity = localStorage.getItem("rg-player-visual-intensity") || "high";
+    } catch {
+      // Keep the High default when storage is unavailable.
+    }
+    setVisualIntensity(savedIntensity, { persist: false });
+    setQueueOpen(false);
+    await selectTrack(state.currentIndex, { autoplay: false, updateHistory: requestedIndex >= 0 });
+
+    const calibrationEnabled = new URL(window.location.href).searchParams.get("calibrate") === "1";
+    if (calibrationEnabled) {
+      visualizer.setTelemetryEnabled(true);
+      window.__RG_PLAYER_CALIBRATION__ = Object.freeze({
+        snapshot: () => visualizer.getTelemetry(),
+        export: () => visualizer.exportTelemetry(),
+        download: downloadCalibration,
+        clear: () => visualizer.clearTelemetry()
+      });
+      document.documentElement.dataset.calibrating = "true";
+      console.info("RG Player calibration capture is active at window.__RG_PLAYER_CALIBRATION__");
+    }
+
+    document.documentElement.dataset.ready = "true";
+  } catch (error) {
+    console.error(error);
+    setStatus("Library catalog unavailable");
+    document.documentElement.dataset.ready = "true";
+    showToast("The catalog could not be loaded");
+  }
+}
+
+initialize();

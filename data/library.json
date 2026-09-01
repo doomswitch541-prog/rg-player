@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 2,
+  "catalogId": "rg-player-demo",
+  "updated": "2026-09-01",
+  "subtitle": "Artwork-reactive personal library",
+  "artist": {
+    "name": "RG Player",
+    "location": "Private library",
+    "description": "A provider-ready personal listening instrument"
+  },
+  "mediaProviders": {
+    "bundled": {
+      "type": "relative",
+      "baseUrl": "."
+    }
+  },
+  "rights": {
+    "archiveCredit": "Player and library by RG.",
+    "defaults": {
+      "status": "direct-permission",
+      "rightsHolder": "RG",
+      "credit": "Generated calibration audio for RG Player.",
+      "sourceLabel": "Project source ↗",
+      "license": null
+    }
+  },
+  "releases": [
+    {
+      "id": "signal-study-2026",
+      "title": "Signal Study",
+      "displayTitle": "Signal Study",
+      "type": "calibration",
+      "releaseDate": "2026-09-01",
+      "genre": "Calibration",
+      "sourceUrl": "https://github.com/doomswitch541-prog/rg-player",
+      "trackIds": ["calibration-pulse"],
+      "artwork": {
+        "provider": "bundled",
+        "publicPath": "assets/demo/demo-cover.svg",
+        "mimeType": "image/svg+xml",
+        "width": 1200,
+        "height": 1200,
+        "bytes": 1419,
+        "sha256": "d5a4377e25515b05410fdb8c8f955ffaadbff146480ae5ab90f08c5ea90e56df"
+      },
+      "palette": {
+        "background": "#090A0C",
+        "surface": "#17191D",
+        "primary": "#303641",
+        "secondary": "#66707F",
+        "accent": "#A9B1BB",
+        "highlight": "#EDF0F2",
+        "colors": ["#090A0C", "#17191D", "#303641", "#4A5360", "#66707F", "#A9B1BB", "#EDF0F2"]
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "id": "calibration-pulse",
+      "catalogOrder": 1,
+      "title": "Calibration Pulse",
+      "artist": "RG Player",
+      "releaseId": "signal-study-2026",
+      "trackNumber": 1,
+      "trackTotal": 1,
+      "discNumber": 1,
+      "discTotal": 1,
+      "releaseDate": "2026-09-01",
+      "genre": "Calibration",
+      "durationMs": 12000,
+      "durationIso": "PT12S",
+      "audio": {
+        "provider": "bundled",
+        "publicPath": "assets/demo/calibration-pulse.wav",
+        "mimeType": "audio/wav",
+        "container": "wav",
+        "codec": "pcm_s16le",
+        "bytes": 1058478,
+        "sha256": "000c9eb67f2ddec361ad43253d8502958e251682633331d49fac15e435a2ce39"
+      },
+      "rights": {
+        "status": "direct-permission",
+        "rightsHolder": "RG",
+        "credit": "Generated calibration audio for RG Player.",
+        "sourceLabel": "Project source ↗",
+        "sourceUrl": "https://github.com/doomswitch541-prog/rg-player",
+        "license": null
+      }
+    }
+  ]
+}

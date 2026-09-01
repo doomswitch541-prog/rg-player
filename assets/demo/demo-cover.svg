@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Signal Study</title>
+  <desc id="desc">A restrained graphite field with a silver hexagonal signal mark.</desc>
+  <defs>
+    <radialGradient id="wash" cx="64%" cy="34%" r="78%">
+      <stop offset="0" stop-color="#7d8796" stop-opacity=".72"/>
+      <stop offset=".42" stop-color="#303641"/>
+      <stop offset="1" stop-color="#090a0c"/>
+    </radialGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#edf0f2"/><stop offset="1" stop-color="#66707f"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="18" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#wash)"/>
+  <g fill="none" stroke="url(#edge)" filter="url(#glow)">
+    <path d="M600 214 934 407v386L600 986 266 793V407Z" stroke-width="7" opacity=".86"/>
+    <path d="M600 330 834 465v270L600 870 366 735V465Z" stroke-width="2" opacity=".52"/>
+  </g>
+  <circle cx="600" cy="600" r="10" fill="#edf0f2"/>
+  <text x="82" y="1010" fill="#edf0f2" font-family="Arial, sans-serif" font-size="86" font-weight="700" letter-spacing="-3">SIGNAL STUDY</text>
+  <text x="87" y="1080" fill="#a9b1bb" font-family="monospace" font-size="24" letter-spacing="8">RG PLAYER / CALIBRATION 01</text>
+</svg>
