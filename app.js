@@ -1,4 +1,4 @@
-import { ArtworkVisualizer } from "./visualizer.js?v=20260901-3";
+import { ArtworkVisualizer } from "./visualizer.js?v=20260902-2";
 import { resolveReleaseArtwork, resolveTrackAudio } from "./media-provider.js?v=20260901-3";
 
 const elements = {
@@ -20,6 +20,7 @@ const elements = {
   releaseName: document.querySelector("#release-name"),
   trackList: document.querySelector("#track-list"),
   catalogRail: document.querySelector("#catalog-rail"),
+  catalogScroll: document.querySelector("#catalog-scroll"),
   trackTitle: document.querySelector("#track-title"),
   nowRelease: document.querySelector("#now-release"),
   playbackStatus: document.querySelector("#playback-status"),
@@ -46,6 +47,9 @@ const elements = {
   queueClose: document.querySelector("#queue-close"),
   queueBackdrop: document.querySelector("#queue-backdrop"),
   intensityButtons: [...document.querySelectorAll("[data-intensity]")],
+  visualModeControl: document.querySelector("#visual-mode-control"),
+  visualModeLabel: document.querySelector("#visual-mode-label"),
+  visualModeButtons: [...document.querySelectorAll("[data-visual-mode]")],
   fullscreenButton: document.querySelector("#fullscreen-button"),
   toast: document.querySelector("#toast"),
   themeColor: document.querySelector('meta[name="theme-color"]'),
@@ -62,6 +66,7 @@ const state = {
   wasPlayingBeforeSeek: false,
   lastVolume: 0.82,
   visualIntensity: "high",
+  visualMode: "balanced",
   toastTimer: null
 };
 
@@ -156,6 +161,30 @@ function setVisualIntensity(mode, { persist = true } = {}) {
       localStorage.setItem("rg-player-visual-intensity", normalized);
     } catch {
       // The preference is optional; the visualizer still defaults to High.
+    }
+  }
+}
+
+function setVisualMode(mode, { persist = true } = {}) {
+  const modes = {
+    balanced: "Balanced",
+    melody: "Melody",
+    impact: "Impact"
+  };
+  const normalized = Object.hasOwn(modes, mode) ? mode : "balanced";
+  state.visualMode = normalized;
+  visualizer.setMode(normalized);
+  elements.visualModeLabel.textContent = modes[normalized];
+  elements.visualModeButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.visualMode === normalized));
+  });
+  elements.visualModeControl.open = false;
+
+  if (persist) {
+    try {
+      localStorage.setItem("rg-player-visual-mode", normalized);
+    } catch {
+      // The preference is optional; Balanced remains the default.
     }
   }
 }
@@ -264,9 +293,14 @@ async function selectTrack(index, { autoplay = false, updateHistory = true } = {
   elements.duration.dateTime = track.durationIso;
   elements.audioFormat.textContent = (track.audio.container || track.audio.mimeType?.split("/").at(-1) || "Audio").toUpperCase();
   elements.playButton.setAttribute("aria-label", `Play ${track.title}`);
-  document.title = `${track.title} — ${track.artist} · RG Resonance`;
+  document.title = `${track.title} — ${track.artist} · RG Player`;
   updateMediaSession(track, release);
   if (updateHistory) updateUrl(track);
+  try {
+    localStorage.setItem("rg-player-current-track", track.id);
+  } catch {
+    // Cross-page track continuity is optional.
+  }
 
   if (changedTrack) {
     elements.seek.value = "0";
@@ -452,6 +486,14 @@ function bindEvents() {
   elements.intensityButtons.forEach((button) => {
     button.addEventListener("click", () => setVisualIntensity(button.dataset.intensity));
   });
+  elements.visualModeButtons.forEach((button) => {
+    button.addEventListener("click", () => setVisualMode(button.dataset.visualMode));
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (elements.visualModeControl.open && !elements.visualModeControl.contains(event.target)) {
+      elements.visualModeControl.open = false;
+    }
+  });
   elements.seek.addEventListener("pointerdown", () => {
     state.isSeeking = true;
     state.wasPlayingBeforeSeek = !elements.audio.paused;
@@ -519,6 +561,9 @@ function bindEvents() {
       toggleMute();
     } else if (event.key.toLowerCase() === "f" && !isTyping) {
       toggleFullscreen();
+    } else if (event.key === "Escape" && elements.visualModeControl.open) {
+      elements.visualModeControl.open = false;
+      elements.visualModeControl.querySelector("summary").focus({ preventScroll: true });
     } else if (event.key === "Escape" && document.body.dataset.queueOpen === "true") {
       setQueueOpen(false, { restoreFocus: true });
     }
@@ -545,7 +590,14 @@ async function initialize() {
     elements.catalogRights.textContent = state.catalog.rights?.defaults?.credit || "Music rights remain with their respective owner.";
     elements.archiveCredit.textContent = state.catalog.rights?.archiveCredit || "Archive and player by RG.";
 
-    const requestedTrackId = new URL(window.location.href).searchParams.get("track");
+    let requestedTrackId = new URL(window.location.href).searchParams.get("track");
+    if (!requestedTrackId) {
+      try {
+        requestedTrackId = localStorage.getItem("rg-player-current-track");
+      } catch {
+        // The first catalog entry remains the fallback.
+      }
+    }
     const requestedIndex = state.catalog.tracks.findIndex((track) => track.id === requestedTrackId);
     state.currentIndex = requestedIndex >= 0 ? requestedIndex : 0;
 
@@ -560,6 +612,13 @@ async function initialize() {
       // Keep the High default when storage is unavailable.
     }
     setVisualIntensity(savedIntensity, { persist: false });
+    let savedVisualMode = "balanced";
+    try {
+      savedVisualMode = localStorage.getItem("rg-player-visual-mode") || "balanced";
+    } catch {
+      // Keep the Balanced default when storage is unavailable.
+    }
+    setVisualMode(savedVisualMode, { persist: false });
     setQueueOpen(false);
     await selectTrack(state.currentIndex, { autoplay: false, updateHistory: requestedIndex >= 0 });
 

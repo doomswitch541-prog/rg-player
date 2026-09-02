@@ -245,6 +245,13 @@ a {
   background: color-mix(in srgb, var(--bg) 44%, transparent);
 }
 
+.catalog-scroll {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
 .queue-backdrop {
   display: none;
 }
@@ -734,6 +741,122 @@ body[data-queue-open="true"] .queue-button .bars > span:last-child {
   top: 24px;
   left: 24px;
   border-radius: 50%;
+}
+
+.visual-mode-control {
+  position: absolute;
+  z-index: 6;
+  top: 24px;
+  left: 24px;
+  color: var(--muted);
+  font: 8px/1 var(--utility);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.visual-mode-control summary {
+  display: grid;
+  min-width: 128px;
+  min-height: 42px;
+  padding: 0 12px;
+  grid-template-columns: auto 1fr 8px;
+  gap: 9px;
+  align-items: center;
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  list-style: none;
+  transition: border-color 220ms ease, background-color 220ms ease;
+}
+
+.visual-mode-control summary::-webkit-details-marker {
+  display: none;
+}
+
+.visual-mode-control summary:hover,
+.visual-mode-control summary:focus-visible,
+.visual-mode-control[open] summary {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+}
+
+.visual-mode-control summary strong {
+  color: var(--ink);
+  font-weight: 500;
+  text-align: right;
+}
+
+.visual-mode-control summary i {
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 220ms var(--ease);
+}
+
+.visual-mode-control[open] summary i {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.visual-mode-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  display: grid;
+  width: 196px;
+  padding: 5px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--bg) 94%, var(--surface));
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(22px) saturate(130%);
+}
+
+.visual-mode-menu button {
+  display: grid;
+  min-height: 48px;
+  padding: 8px 10px;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid var(--faint);
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.visual-mode-menu button:last-child {
+  border-bottom: 0;
+}
+
+.visual-mode-menu button strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.visual-mode-menu button small {
+  color: var(--muted);
+  font: 7px/1 var(--utility);
+  letter-spacing: 0.06em;
+}
+
+.visual-mode-menu button:hover,
+.visual-mode-menu button:focus-visible,
+.visual-mode-menu button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.visual-mode-menu button[aria-pressed="true"] strong::before {
+  content: "●";
+  margin-right: 7px;
+  color: var(--accent);
+  font-size: 6px;
 }
 
 .gesture-note {
@@ -1289,7 +1412,7 @@ html[data-ready="true"] .site-footer {
   .catalog-rail {
     position: fixed;
     z-index: 32;
-    display: grid;
+    display: flex;
     top: 0;
     bottom: auto;
     left: 0;
@@ -1297,13 +1420,13 @@ html[data-ready="true"] .site-footer {
     height: 100dvh;
     max-height: 100dvh;
     padding: max(28px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
     border-right-color: var(--hairline);
     background: color-mix(in srgb, var(--bg) 94%, var(--surface));
     box-shadow: 30px 0 80px rgba(0, 0, 0, 0.52);
     backdrop-filter: blur(28px) saturate(140%);
     -webkit-backdrop-filter: blur(28px) saturate(140%);
     overflow: hidden;
+    overscroll-behavior: contain;
     transform: translateX(-105%);
     transition: transform 420ms var(--ease);
   }
@@ -1314,6 +1437,28 @@ html[data-ready="true"] .site-footer {
     margin-bottom: 24px;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .catalog-rail .catalog-scroll {
+    display: block;
+    min-height: 0;
+    padding-right: 4px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--hairline) transparent;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .catalog-rail .catalog-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .catalog-rail .catalog-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--hairline);
   }
 
   .rail-mobile-brand {
@@ -1330,24 +1475,7 @@ html[data-ready="true"] .site-footer {
   }
 
   .catalog-rail .track-list {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
-    scrollbar-width: thin;
-    scrollbar-color: var(--hairline) transparent;
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .catalog-rail .track-list::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .catalog-rail .track-list::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: var(--hairline);
+    overflow: visible;
   }
 
   .catalog-rail .track-select {
@@ -1355,7 +1483,7 @@ html[data-ready="true"] .site-footer {
   }
 
   .catalog-rail .rail-foot {
-    margin-top: 0;
+    margin-top: 18px;
     padding: 14px 0 0;
     border-top: 1px solid var(--faint);
   }
@@ -1419,6 +1547,10 @@ html[data-ready="true"] .site-footer {
 
   .queue-button {
     display: grid;
+  }
+
+  .visual-mode-control {
+    left: 78px;
   }
 
   .visual-stage {
@@ -1534,6 +1666,15 @@ html[data-ready="true"] .site-footer {
   .fullscreen-button,
   .queue-button {
     top: 14px;
+  }
+
+  .visual-mode-control {
+    top: 14px;
+    left: 70px;
+  }
+
+  .visual-mode-control summary {
+    min-height: 42px;
   }
 
   .fullscreen-button {

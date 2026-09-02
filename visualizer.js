@@ -1,8 +1,8 @@
 const TAU = Math.PI * 2;
 
 export const VISUAL_OBJECT_SIGNAL_CONTRACT = Object.freeze({
-  fieldHexagon: "low-band body, mid-band body, and relative transient rebound",
-  spectrumRing: "mid/treble body, live spectrum-bin contour, and relative transient articulation",
+  fieldHexagon: "low/mid body, restrained transient rebound, and optional melodic presence",
+  spectrumRing: "mid/treble body, live spectrum contour, relative transients, and optional melodic articulation",
   chronologyDots: "sparse band-mapped relative onsets and sustained accents in repeating node order",
   outerHalo: "low-band depth with overall energy and late-track progress glow",
   paletteField: "full-palette travel accelerated by energy, band motion, flux, impact, and relative transients",
@@ -45,6 +45,21 @@ function bandSignal(values, start, end) {
   return averageRange(values, start, end) * 0.56
     + rmsRange(values, start, end) * 0.29
     + peakRange(values, start, end) * 0.15;
+}
+
+function spectralPeakiness(values, start, end) {
+  if (!values?.length) return 0;
+  const safeStart = Math.max(1, start);
+  const safeEnd = Math.min(values.length - 1, end);
+  let contrast = 0;
+  let count = 0;
+  for (let index = safeStart; index < safeEnd; index += 1) {
+    const center = values[index] / 255;
+    const neighbors = (values[index - 1] + values[index + 1]) / 510;
+    contrast += Math.max(0, center - neighbors) * (0.35 + center * 0.65);
+    count += 1;
+  }
+  return count ? contrast / count : 0;
 }
 
 function normalizeBand(value, floor, ceiling, curve = 0.9) {
@@ -144,6 +159,7 @@ export class ArtworkVisualizer {
     this.visualTreble = 0;
     this.rawEnergy = 0;
     this.intensity = 1.72;
+    this.mode = "balanced";
     this.audioEnergy = 0;
     this.audioFlux = 0;
     this.bandMotion = 0;
@@ -164,6 +180,14 @@ export class ArtworkVisualizer {
     this.relativeFlux = 0;
     this.relativeImpact = 0;
     this.transientDrive = 0;
+    this.previousMelodyTarget = 0;
+    this.melodyFloor = 0;
+    this.melodyCeiling = 0.18;
+    this.melodyRangeReady = false;
+    this.melodyBand = 0;
+    this.tonalContour = 0;
+    this.melodyPresence = 0;
+    this.melodyMotion = 0;
     this.fastEnergy = 0;
     this.slowEnergy = 0;
     this.palettePhase = 0;
@@ -171,7 +195,7 @@ export class ArtworkVisualizer {
     this.paletteVelocity = 0;
     this.paletteMonochrome = 0;
     this.signalColors = [];
-    this.fieldScale = 1.22;
+    this.fieldScale = 1.36;
     this.isPlaying = false;
     this.cornerSweep = null;
     this.cornerSweepCount = 0;
@@ -265,11 +289,24 @@ export class ArtworkVisualizer {
     this.relativeFlux = 0;
     this.relativeImpact = 0;
     this.transientDrive = 0;
+    this.previousMelodyTarget = 0;
+    this.melodyFloor = 0;
+    this.melodyCeiling = 0.18;
+    this.melodyRangeReady = false;
+    this.melodyBand = 0;
+    this.tonalContour = 0;
+    this.melodyPresence = 0;
+    this.melodyMotion = 0;
     if (this.nodePulseOrder.length !== count) this.resetNodePulseOrder();
   }
 
   setIntensity(value) {
     this.intensity = Math.max(0.8, Math.min(2, Number(value) || 1));
+  }
+
+  setMode(mode) {
+    this.mode = ["balanced", "melody", "impact"].includes(mode) ? mode : "balanced";
+    this.stage.dataset.visualMode = this.mode;
   }
 
   setTelemetryEnabled(enabled) {
@@ -298,7 +335,13 @@ export class ArtworkVisualizer {
       return active;
     }, []);
 
-    const ringArticulation = Math.min(1, this.visualMids * 0.5 + this.visualTreble * 0.25 + this.transientDrive * 0.25);
+    const melodyMix = this.mode === "melody" ? 0.22 : 0.06;
+    const ringArticulation = Math.min(1,
+      this.visualMids * 0.45
+      + this.visualTreble * 0.23
+      + this.transientDrive * 0.22
+      + this.melodyPresence * melodyMix
+    );
     const haloDepth = Math.min(1, this.visualBass * 0.72 + this.audioEnergy * 0.28);
     const vertexTexture = Math.min(1,
       (Math.max(this.visualBass, this.visualMids, this.visualTreble)
@@ -307,8 +350,9 @@ export class ArtworkVisualizer {
     );
 
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       trackId: this.trackId,
+      visualMode: this.mode,
       audioTime: Number((this.audio.currentTime || 0).toFixed(3)),
       playing: this.isPlaying,
       inputs: {
@@ -320,6 +364,10 @@ export class ArtworkVisualizer {
         relativeFlux: Number(this.relativeFlux.toFixed(4)),
         relativeImpact: Number(this.relativeImpact.toFixed(4)),
         transientDrive: Number(this.transientDrive.toFixed(4)),
+        melodyBand: Number(this.melodyBand.toFixed(4)),
+        tonalContour: Number(this.tonalContour.toFixed(4)),
+        melodyPresence: Number(this.melodyPresence.toFixed(4)),
+        melodyMotion: Number(this.melodyMotion.toFixed(4)),
         dropContrast: Number(this.dropContrast.toFixed(4))
       },
       outputs: {
@@ -350,7 +398,7 @@ export class ArtworkVisualizer {
 
   exportTelemetry() {
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: new Date().toISOString(),
       objectSignalContract: VISUAL_OBJECT_SIGNAL_CONTRACT,
       frames: [...this.telemetryFrames],
@@ -540,6 +588,8 @@ export class ArtworkVisualizer {
     let targetBass = 0;
     let targetMids = 0;
     let targetTreble = 0;
+    let targetMelody = 0;
+    let targetTonalContour = 0;
 
     if (playing && this.analyser && this.frequencyData) {
       this.analyser.getByteFrequencyData(this.frequencyData);
@@ -547,7 +597,32 @@ export class ArtworkVisualizer {
       targetBass = Math.min(1, normalizeBand(bandSignal(this.frequencyData, 1, 6), 0.28, 0.98, 1.1) * intensityGain);
       targetMids = Math.min(1, normalizeBand(bandSignal(this.frequencyData, 6, 31), 0.16, 0.88, 1.08) * intensityGain);
       targetTreble = Math.min(1, normalizeBand(bandSignal(this.frequencyData, 31, 106), 0.07, 0.78, 1.02) * intensityGain);
+      targetMelody = normalizeBand(bandSignal(this.frequencyData, 6, 42), 0.14, 0.88, 1.06);
+      targetTonalContour = spectralPeakiness(this.frequencyData, 6, 42);
     }
+
+    if (playing && !this.melodyRangeReady && targetMelody > 0.02) {
+      this.melodyFloor = Math.max(0, targetMelody - 0.08);
+      this.melodyCeiling = Math.min(1, targetMelody + 0.12);
+      this.previousMelodyTarget = targetMelody;
+      this.melodyRangeReady = true;
+    }
+    if (playing && this.melodyRangeReady) {
+      this.melodyFloor += (targetMelody - this.melodyFloor) * (targetMelody < this.melodyFloor ? 0.1 : 0.0014);
+      this.melodyCeiling += (targetMelody - this.melodyCeiling) * (targetMelody > this.melodyCeiling ? 0.075 : 0.0024);
+    }
+    const relativeMelody = playing
+      ? Math.max(0, Math.min(1, (targetMelody - this.melodyFloor) / Math.max(0.12, this.melodyCeiling - this.melodyFloor)))
+      : 0;
+    const melodyDelta = targetMelody - this.previousMelodyTarget;
+    this.previousMelodyTarget = targetMelody;
+    this.melodyBand = followBand(this.melodyBand, targetMelody, 0.24, 0.09);
+    this.tonalContour = followBand(this.tonalContour, targetTonalContour, 0.24, 0.09);
+    this.melodyMotion = followBand(this.melodyMotion, playing ? Math.abs(melodyDelta) : 0, 0.4, 0.1);
+    const targetMelodyPresence = playing
+      ? Math.max(0, Math.min(1, targetMelody * 0.44 + relativeMelody * 0.38 + targetTonalContour * 1.8))
+      : 0;
+    this.melodyPresence = followBand(this.melodyPresence, targetMelodyPresence, 0.22, 0.075);
 
     const targets = [targetBass, targetMids, targetTreble];
     this.targetBands = [...targets];
@@ -679,6 +754,7 @@ export class ArtworkVisualizer {
     const targetPaletteVelocity = playing
       ? 0.008 + this.rawEnergy * 0.05 + this.bandMotion * 2.35 + this.audioFlux * 2.6 + this.impactEnergy * 3.4
         + Math.max(0, this.transientDrive - 0.5) * 0.025
+        + (this.mode === "melody" ? this.melodyMotion * 0.24 + this.melodyPresence * 0.004 : 0)
       : 0.006;
     this.paletteVelocity = followBand(this.paletteVelocity, targetPaletteVelocity, 0.34, 0.075);
     const motionScale = this.reducedMotion ? 0.3 : 1;
@@ -687,6 +763,7 @@ export class ArtworkVisualizer {
     this.stage.style.setProperty("--bass", visualBass.toFixed(3));
     this.stage.style.setProperty("--mids", visualMids.toFixed(3));
     this.stage.style.setProperty("--treble", visualTreble.toFixed(3));
+    this.stage.style.setProperty("--melody", this.melodyPresence.toFixed(3));
     this.stage.style.setProperty("--palette-phase", this.palettePhase.toFixed(4));
     this.stage.style.setProperty("--palette-travel", this.paletteTravel.toFixed(4));
     this.stage.style.setProperty("--drop-contrast", dropContrast.toFixed(3));
@@ -698,6 +775,8 @@ export class ArtworkVisualizer {
     this.stage.dataset.relativeFlux = this.relativeFlux.toFixed(4);
     this.stage.dataset.relativeImpact = this.relativeImpact.toFixed(4);
     this.stage.dataset.transientDrive = this.transientDrive.toFixed(4);
+    this.stage.dataset.melodyPresence = this.melodyPresence.toFixed(4);
+    this.stage.dataset.melodyMotion = this.melodyMotion.toFixed(4);
     this.stage.dataset.paletteVelocity = this.paletteVelocity.toFixed(4);
     const progress = this.audio.duration ? this.audio.currentTime / this.audio.duration : 0;
     this.stage.style.setProperty("--progress", progress.toFixed(4));
@@ -745,7 +824,21 @@ export class ArtworkVisualizer {
     const treble = this.visualTreble;
     const transientAccent = Math.max(0, this.transientDrive - 0.5) * 0.02;
     const punch = Math.min(0.08, this.impactEnergy * 1.4 + this.audioFlux * 0.18 + transientAccent);
-    const fieldTarget = Math.min(1.56, 1.22 + bass * 0.22 + mids * 0.12 + punch * 1.05);
+    const fieldProfiles = {
+      balanced: { base: 1.36, cap: 1.74, bass: 0.21, mids: 0.115, melody: 0.03, punch: 1.02 },
+      melody: { base: 1.37, cap: 1.76, bass: 0.17, mids: 0.1, melody: 0.12, punch: 0.82 },
+      impact: { base: 1.35, cap: 1.76, bass: 0.255, mids: 0.085, melody: 0.015, punch: 1.22 }
+    };
+    const profile = fieldProfiles[this.mode] || fieldProfiles.balanced;
+    const melodicLift = this.melodyPresence * profile.melody
+      + (this.mode === "melody" ? Math.min(0.025, this.melodyMotion * 1.6) : 0);
+    const fieldTarget = Math.min(profile.cap,
+      profile.base
+      + bass * profile.bass
+      + mids * profile.mids
+      + punch * profile.punch
+      + melodicLift
+    );
     this.fieldScale = followBand(this.fieldScale, fieldTarget, 0.2 + this.transientDrive * 0.04, 0.085);
     this.stage.style.setProperty("--field-scale", this.fieldScale.toFixed(4));
     this.stage.style.setProperty("--field-rotation", "0");
@@ -764,6 +857,7 @@ export class ArtworkVisualizer {
         bin * 0.055
         + band * 0.05
         + punch * 0.14
+        + (this.mode === "melody" ? this.melodyPresence * 0.018 : 0)
       );
       vertices.push({
         x: centerX + Math.cos(angle) * radius,
@@ -771,7 +865,7 @@ export class ArtworkVisualizer {
       });
     }
 
-    const fieldRadius = coverRadius * (1.5 + bass * 0.28 + punch * 0.4);
+    const fieldRadius = coverRadius * (1.62 + bass * 0.28 + punch * 0.4 + melodicLift * 0.45);
     const highPresence = Math.max(0, this.intensity - 1) * 0.13;
     const paletteColors = this.getSignalColors();
     const contrastBoost = 1 + this.paletteMonochrome * 0.48;
@@ -794,8 +888,8 @@ export class ArtworkVisualizer {
       const x = centerX + Math.cos(field.angle) * travel;
       const y = centerY + Math.sin(field.angle) * travel;
       const gradient = ctx.createRadialGradient(x, y, 0, x, y, fieldRadius);
-      gradient.addColorStop(0, rgba(field.color, (0.025 + highPresence * 0.05 + field.energy * 0.12) * contrastBoost));
-      gradient.addColorStop(0.38, rgba(field.color, (0.018 + highPresence * 0.025 + field.energy * 0.07) * contrastBoost));
+      gradient.addColorStop(0, rgba(field.color, (0.052 + highPresence * 0.055 + field.energy * 0.13) * contrastBoost));
+      gradient.addColorStop(0.38, rgba(field.color, (0.03 + highPresence * 0.03 + field.energy * 0.078) * contrastBoost));
       gradient.addColorStop(1, rgba(field.color, 0));
       ctx.fillStyle = gradient;
       ctx.fillRect(centerX - fieldRadius, centerY - fieldRadius, fieldRadius * 2, fieldRadius * 2);
@@ -810,8 +904,8 @@ export class ArtworkVisualizer {
     });
     ctx.closePath();
     ctx.clip();
-    const membraneColor = colorAt(paletteColors, this.palettePhase + 0.11);
-    ctx.fillStyle = rgba(membraneColor, (0.04 + bass * 0.045) * contrastBoost);
+    const membraneColor = mixHex(colorAt(paletteColors, this.palettePhase + 0.11), this.palette.highlight, 0.1);
+    ctx.fillStyle = rgba(membraneColor, (0.085 + bass * 0.06 + melodicLift * 0.08) * contrastBoost);
     ctx.fill();
     ctx.globalCompositeOperation = "screen";
     ctx.filter = `saturate(${1.22 + this.intensity * 0.14})`;
@@ -821,8 +915,8 @@ export class ArtworkVisualizer {
       const x = centerX + Math.cos(field.angle) * travel;
       const y = centerY + Math.sin(field.angle) * travel;
       const gradient = ctx.createRadialGradient(x, y, 0, x, y, fieldRadius);
-      gradient.addColorStop(0, rgba(field.color, (0.07 + highPresence * 0.08 + field.energy * 0.18) * contrastBoost));
-      gradient.addColorStop(0.46, rgba(field.color, (0.028 + highPresence * 0.04 + field.energy * 0.09) * contrastBoost));
+      gradient.addColorStop(0, rgba(field.color, (0.105 + highPresence * 0.09 + field.energy * 0.2) * contrastBoost));
+      gradient.addColorStop(0.46, rgba(field.color, (0.045 + highPresence * 0.045 + field.energy * 0.105) * contrastBoost));
       gradient.addColorStop(1, rgba(field.color, 0));
       ctx.fillStyle = gradient;
       ctx.fillRect(centerX - fieldRadius, centerY - fieldRadius, fieldRadius * 2, fieldRadius * 2);
@@ -837,12 +931,12 @@ export class ArtworkVisualizer {
       else ctx.lineTo(point.x, point.y);
     });
     ctx.closePath();
-    const outlineColor = colorAt(paletteColors, this.palettePhase + 0.58);
+    const outlineColor = mixHex(colorAt(paletteColors, this.palettePhase + 0.58), this.palette.highlight, 0.22);
     const shadowColor = colorAt(paletteColors, this.palettePhase + 0.19);
-    ctx.strokeStyle = rgba(outlineColor, Math.min(0.96, (0.34 + mids * 0.38 + punch * 0.4) * contrastBoost));
-    ctx.lineWidth = 1.15 + mids * 1.55 + punch * 1.35 + this.paletteMonochrome * 0.55;
-    ctx.shadowColor = rgba(shadowColor, 0.4 + bass * 0.25);
-    ctx.shadowBlur = 8 + bass * 20 + punch * 12;
+    ctx.strokeStyle = rgba(outlineColor, Math.min(0.98, (0.52 + mids * 0.34 + punch * 0.42 + melodicLift * 0.35) * contrastBoost));
+    ctx.lineWidth = 1.5 + mids * 1.45 + punch * 1.35 + this.paletteMonochrome * 0.55;
+    ctx.shadowColor = rgba(shadowColor, 0.52 + bass * 0.25);
+    ctx.shadowBlur = 12 + bass * 20 + punch * 12 + melodicLift * 10;
     ctx.stroke();
     ctx.restore();
   }
@@ -961,6 +1055,7 @@ export class ArtworkVisualizer {
     const paletteColors = this.getSignalColors();
     const signalColors = paletteColors.length > 4 ? paletteColors.slice(2) : paletteColors;
     const spectrumColor = colorAt(signalColors, this.palettePhase + 0.38);
+    const melodicArticulation = this.mode === "melody" ? this.melodyPresence : this.melodyPresence * 0.12;
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(rotation);
@@ -979,7 +1074,10 @@ export class ArtworkVisualizer {
         : 0;
       const symmetry = Math.abs(Math.sin(angle * 3.5));
       const articulation = this.transientDrive * (1.2 + bin * 2.8);
-      const amplitude = midBody * (0.3 + bin * 0.8) + symmetry * this.visualTreble * 5 + articulation;
+      const amplitude = midBody * (0.3 + bin * 0.8)
+        + symmetry * this.visualTreble * 5
+        + articulation
+        + melodicArticulation * (0.8 + bin * 2.1);
       const currentRadius = radius * 1.28 + amplitude;
       const x = Math.cos(angle) * currentRadius;
       const y = Math.sin(angle) * currentRadius;
@@ -988,10 +1086,10 @@ export class ArtworkVisualizer {
     }
 
     ctx.closePath();
-    ctx.strokeStyle = rgba(spectrumColor, 0.38 + this.visualMids * 0.5 + this.audioFlux * 0.28 + this.transientDrive * 0.12);
-    ctx.lineWidth = 1.15 + this.visualMids * 2 + this.audioFlux * 1.3 + this.transientDrive * 0.5;
+    ctx.strokeStyle = rgba(spectrumColor, 0.38 + this.visualMids * 0.46 + this.audioFlux * 0.28 + this.transientDrive * 0.12 + melodicArticulation * 0.16);
+    ctx.lineWidth = 1.15 + this.visualMids * 1.85 + this.audioFlux * 1.3 + this.transientDrive * 0.5 + melodicArticulation * 0.55;
     ctx.shadowColor = rgba(spectrumColor, 0.58);
-    ctx.shadowBlur = 6 + this.visualTreble * 9 + this.transientDrive * 5;
+    ctx.shadowBlur = 6 + this.visualTreble * 9 + this.transientDrive * 5 + melodicArticulation * 7;
     ctx.stroke();
     ctx.restore();
   }
