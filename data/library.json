@@ -1,15 +1,15 @@
 {
   "schemaVersion": 2,
-  "catalogId": "rg-player-demo",
+  "catalogId": "rg-resonance",
   "updated": "2026-09-01",
-  "subtitle": "Artwork-reactive personal library",
+  "subtitle": "Resonance reference player",
   "artist": {
-    "name": "RG Player",
-    "location": "Private library",
-    "description": "A provider-ready personal listening instrument"
+    "name": "RG Resonance",
+    "location": "Personal reference library",
+    "description": "A phone-first listening instrument for studying felt resonance"
   },
   "mediaProviders": {
-    "bundled": {
+    "private-library": {
       "type": "relative",
       "baseUrl": "."
     }
@@ -17,73 +17,253 @@
   "rights": {
     "archiveCredit": "Player and library by RG.",
     "defaults": {
-      "status": "direct-permission",
-      "rightsHolder": "RG",
-      "credit": "Generated calibration audio for RG Player.",
-      "sourceLabel": "Project source ↗",
+      "status": "all-rights-reserved",
+      "rightsHolder": "Respective artists and labels",
+      "credit": "All rights remain with the respective artists and labels.",
+      "sourceLabel": "Official source ↗",
       "license": null
     }
   },
   "releases": [
     {
-      "id": "signal-study-2026",
-      "title": "Signal Study",
-      "displayTitle": "Signal Study",
-      "type": "calibration",
-      "releaseDate": "2026-09-01",
-      "genre": "Calibration",
-      "sourceUrl": "https://github.com/doomswitch541-prog/rg-player",
-      "trackIds": ["calibration-pulse"],
+      "id": "julez-somewhere-2024",
+      "title": "Somewhere",
+      "displayTitle": "Somewhere — Single",
+      "type": "single",
+      "releaseDate": "2024-03-02",
+      "genre": "Downtempo",
+      "sourceUrl": "https://music.apple.com/us/album/somewhere/1734039514?i=1734039515",
+      "trackIds": ["julez-somewhere"],
       "artwork": {
-        "provider": "bundled",
-        "publicPath": "assets/demo/demo-cover.svg",
-        "mimeType": "image/svg+xml",
+        "provider": "private-library",
+        "publicPath": "assets/resonance/artwork/2024-julez-somewhere.jpg",
+        "mimeType": "image/jpeg",
         "width": 1200,
         "height": 1200,
-        "bytes": 1419,
-        "sha256": "d5a4377e25515b05410fdb8c8f955ffaadbff146480ae5ab90f08c5ea90e56df"
+        "bytes": 273290,
+        "sha256": "3cd34dddc9e6279e4f6481d1e51910c091a3ef7818e2ef1fbbbee8971652c83b"
       },
       "palette": {
-        "background": "#090A0C",
-        "surface": "#17191D",
-        "primary": "#303641",
-        "secondary": "#66707F",
-        "accent": "#A9B1BB",
-        "highlight": "#EDF0F2",
-        "colors": ["#090A0C", "#17191D", "#303641", "#4A5360", "#66707F", "#A9B1BB", "#EDF0F2"]
+        "background": "#04131D",
+        "surface": "#092A3A",
+        "primary": "#0D506E",
+        "secondary": "#167FA8",
+        "accent": "#53BDE6",
+        "highlight": "#E0F8FF",
+        "colors": ["#04131D", "#092A3A", "#0D506E", "#167FA8", "#53BDE6", "#A8E8FA", "#E0F8FF"]
+      }
+    },
+    {
+      "id": "julez-somewhere-remixes-2026",
+      "title": "Somewhere (Remixes)",
+      "displayTitle": "Somewhere (Remixes) — Single",
+      "type": "single",
+      "releaseDate": "2026-01-02",
+      "genre": "Ambient",
+      "sourceUrl": "https://music.apple.com/us/album/somewhere-slowed-reverb/1866187330?i=1866187338",
+      "trackIds": ["julez-somewhere-slowed-reverb"],
+      "artwork": {
+        "provider": "private-library",
+        "publicPath": "assets/resonance/artwork/2026-julez-somewhere-remixes.jpg",
+        "mimeType": "image/jpeg",
+        "width": 1200,
+        "height": 1200,
+        "bytes": 229801,
+        "sha256": "540aab327d5a9072cf49a4bc049e6c3670e0f0c82d6e6fbdcb6e5be21a18def0"
+      },
+      "palette": {
+        "background": "#100C24",
+        "surface": "#231A47",
+        "primary": "#44318A",
+        "secondary": "#7358D0",
+        "accent": "#A891FF",
+        "highlight": "#F2EDFF",
+        "colors": ["#100C24", "#231A47", "#44318A", "#7358D0", "#A891FF", "#D2C6FF", "#F2EDFF"]
+      }
+    },
+    {
+      "id": "antent-hope-to-see-you-again-2023",
+      "title": "Hope To See You Again",
+      "displayTitle": "Hope To See You Again — Single",
+      "type": "single",
+      "releaseDate": "2023-02-10",
+      "genre": "Electronic",
+      "sourceUrl": "https://music.apple.com/us/album/hope-to-see-you-again/1667411281?i=1667411282",
+      "trackIds": ["antent-hope-to-see-you-again"],
+      "artwork": {
+        "provider": "private-library",
+        "publicPath": "assets/resonance/artwork/2023-antent-hope-to-see-you-again.jpg",
+        "mimeType": "image/jpeg",
+        "width": 1200,
+        "height": 1200,
+        "bytes": 146929,
+        "sha256": "12277ab4d035cbf95091f2f061b855bd0d3e0134371ecc0f716c80ec2378d0c2"
+      },
+      "palette": {
+        "background": "#061321",
+        "surface": "#0B2840",
+        "primary": "#174C76",
+        "secondary": "#3473B8",
+        "accent": "#719EE7",
+        "highlight": "#C8DCFF",
+        "colors": ["#061321", "#0B2840", "#174C76", "#3473B8", "#719EE7", "#9ABCF2", "#C8DCFF"]
+      }
+    },
+    {
+      "id": "antent-hope-to-see-you-again-slowed-2024",
+      "title": "Hope To See You Again (Slowed)",
+      "displayTitle": "Hope To See You Again — Slowed",
+      "type": "official-edit",
+      "releaseDate": "2024-04-05",
+      "genre": "Ambient",
+      "sourceUrl": "https://www.youtube.com/watch?v=k14PWE8s8yQ",
+      "trackIds": ["antent-hope-to-see-you-again-slowed"],
+      "artwork": {
+        "provider": "private-library",
+        "publicPath": "assets/resonance/artwork/2023-antent-hope-to-see-you-again.jpg",
+        "mimeType": "image/jpeg",
+        "width": 1200,
+        "height": 1200,
+        "bytes": 146929,
+        "sha256": "12277ab4d035cbf95091f2f061b855bd0d3e0134371ecc0f716c80ec2378d0c2"
+      },
+      "palette": {
+        "background": "#050F1B",
+        "surface": "#0A2136",
+        "primary": "#123C61",
+        "secondary": "#285E9A",
+        "accent": "#5C88CE",
+        "highlight": "#B9D2F7",
+        "colors": ["#050F1B", "#0A2136", "#123C61", "#285E9A", "#5C88CE", "#8FAFDE", "#B9D2F7"]
       }
     }
   ],
   "tracks": [
     {
-      "id": "calibration-pulse",
+      "id": "julez-somewhere",
       "catalogOrder": 1,
-      "title": "Calibration Pulse",
-      "artist": "RG Player",
-      "releaseId": "signal-study-2026",
+      "title": "Somewhere",
+      "artist": "julez",
+      "releaseId": "julez-somewhere-2024",
       "trackNumber": 1,
       "trackTotal": 1,
       "discNumber": 1,
       "discTotal": 1,
-      "releaseDate": "2026-09-01",
-      "genre": "Calibration",
-      "durationMs": 12000,
-      "durationIso": "PT12S",
+      "releaseDate": "2024-03-02",
+      "genre": "Downtempo",
+      "durationMs": 91917,
+      "durationIso": "PT1M31.917S",
       "audio": {
-        "provider": "bundled",
-        "publicPath": "assets/demo/calibration-pulse.wav",
-        "mimeType": "audio/wav",
-        "container": "wav",
-        "codec": "pcm_s16le",
-        "bytes": 1058478,
-        "sha256": "000c9eb67f2ddec361ad43253d8502958e251682633331d49fac15e435a2ce39"
+        "provider": "private-library",
+        "publicPath": "assets/resonance/audio/01-julez-somewhere.m4a",
+        "mimeType": "audio/mp4",
+        "container": "m4a",
+        "codec": "aac",
+        "bytes": 1520191,
+        "sha256": "cf7054ab72bb04a0008114a8bfb6b7fff7aa7bc13844449d21a8221bec2cbdf6"
       },
       "rights": {
-        "status": "direct-permission",
-        "rightsHolder": "RG",
-        "credit": "Generated calibration audio for RG Player.",
-        "sourceLabel": "Project source ↗",
-        "sourceUrl": "https://github.com/doomswitch541-prog/rg-player",
+        "status": "all-rights-reserved",
+        "rightsHolder": "julez",
+        "credit": "All rights go to julez.",
+        "sourceLabel": "Official source ↗",
+        "sourceUrl": "https://www.youtube.com/watch?v=adND60NazvU",
+        "license": null
+      }
+    },
+    {
+      "id": "julez-somewhere-slowed-reverb",
+      "catalogOrder": 2,
+      "title": "Somewhere (Slowed + Reverb)",
+      "artist": "julez",
+      "releaseId": "julez-somewhere-remixes-2026",
+      "trackNumber": 1,
+      "trackTotal": 2,
+      "discNumber": 1,
+      "discTotal": 1,
+      "releaseDate": "2026-01-02",
+      "genre": "Ambient",
+      "durationMs": 119344,
+      "durationIso": "PT1M59.344S",
+      "audio": {
+        "provider": "private-library",
+        "publicPath": "assets/resonance/audio/03-julez-somewhere-slowed-reverb.m4a",
+        "mimeType": "audio/mp4",
+        "container": "m4a",
+        "codec": "aac",
+        "bytes": 1964123,
+        "sha256": "9103104b13a6a46f7e086610f32d72027967a2dbb359182254dfafb83bd878aa"
+      },
+      "rights": {
+        "status": "all-rights-reserved",
+        "rightsHolder": "julez",
+        "credit": "All rights go to julez.",
+        "sourceLabel": "Official source ↗",
+        "sourceUrl": "https://www.youtube.com/watch?v=cXRxzL6nt-o",
+        "license": null
+      }
+    },
+    {
+      "id": "antent-hope-to-see-you-again",
+      "catalogOrder": 3,
+      "title": "Hope To See You Again",
+      "artist": "Antent",
+      "releaseId": "antent-hope-to-see-you-again-2023",
+      "trackNumber": 1,
+      "trackTotal": 1,
+      "discNumber": 1,
+      "discTotal": 1,
+      "releaseDate": "2023-02-10",
+      "genre": "Electronic",
+      "durationMs": 147764,
+      "durationIso": "PT2M27.764S",
+      "audio": {
+        "provider": "private-library",
+        "publicPath": "assets/resonance/audio/02-antent-hope-to-see-you-again.m4a",
+        "mimeType": "audio/mp4",
+        "container": "m4a",
+        "codec": "aac",
+        "bytes": 2412758,
+        "sha256": "ddfc2a334687c39c466cc21e75c5ae78ceeeb97e5dc55b26333eb1c1e674ea50"
+      },
+      "rights": {
+        "status": "all-rights-reserved",
+        "rightsHolder": "Antent / dreamscape",
+        "credit": "All rights go to Antent and dreamscape.",
+        "sourceLabel": "Official source ↗",
+        "sourceUrl": "https://www.youtube.com/watch?v=KQ5qkE584IU",
+        "license": null
+      }
+    },
+    {
+      "id": "antent-hope-to-see-you-again-slowed",
+      "catalogOrder": 4,
+      "title": "Hope To See You Again (Slowed)",
+      "artist": "Antent",
+      "releaseId": "antent-hope-to-see-you-again-slowed-2024",
+      "trackNumber": 1,
+      "trackTotal": 1,
+      "discNumber": 1,
+      "discTotal": 1,
+      "releaseDate": "2024-04-05",
+      "genre": "Ambient",
+      "durationMs": 176193,
+      "durationIso": "PT2M56.193S",
+      "audio": {
+        "provider": "private-library",
+        "publicPath": "assets/resonance/audio/04-antent-hope-to-see-you-again-slowed.m4a",
+        "mimeType": "audio/mp4",
+        "container": "m4a",
+        "codec": "aac",
+        "bytes": 2892030,
+        "sha256": "5fed44cdafb0ae632bfcb5059e194cc448874c8e1fe93756956c9653dc9bb8c6"
+      },
+      "rights": {
+        "status": "all-rights-reserved",
+        "rightsHolder": "Antent / dreamscape",
+        "credit": "All rights go to Antent and dreamscape.",
+        "sourceLabel": "Official source ↗",
+        "sourceUrl": "https://www.youtube.com/watch?v=k14PWE8s8yQ",
         "license": null
       }
     }

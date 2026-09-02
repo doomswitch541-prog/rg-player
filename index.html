@@ -3,32 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#090a0c">
+  <meta name="theme-color" content="#04131d">
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="RG Player — a private, artwork-reactive personal music library.">
-  <title>RG Player</title>
-  <link rel="icon" type="image/svg+xml" href="assets/demo/demo-cover.svg">
-  <link rel="stylesheet" href="styles.css?v=20260901-1">
-  <script type="module" src="app.js?v=20260901-1"></script>
+  <meta name="description" content="RG Resonance — two artwork-reactive reference tracks for studying felt musical resonance.">
+  <title>RG Resonance</title>
+  <link rel="icon" type="image/jpeg" href="assets/resonance/artwork/2024-julez-somewhere.jpg">
+  <link rel="apple-touch-icon" href="assets/resonance/artwork/2024-julez-somewhere.jpg">
+  <link rel="stylesheet" href="styles.css?v=20260901-2">
+  <script type="module" src="app.js?v=20260901-2"></script>
 </head>
 <body>
   <div class="art-wash" id="art-wash" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
 
   <header class="masthead">
-    <a class="identity" href="#experience" aria-label="RG Player home">
+    <a class="identity" href="#experience" aria-label="RG Resonance home">
       <span class="identity-mark"><span id="identity-mark">RG</span></span>
       <span class="identity-copy">
-        <strong id="identity-name">RG Player</strong>
-        <small id="identity-subtitle">Artwork-reactive library</small>
+        <strong id="identity-name">RG Resonance</strong>
+        <small id="identity-subtitle">Resonance reference player</small>
       </span>
     </a>
 
     <div class="archive-tally" aria-label="Library totals">
-      <span><strong id="track-total">01</strong> tracks</span>
-      <span><strong id="release-total">01</strong> releases</span>
-      <span><strong id="runtime-total">0:12</strong> runtime</span>
+      <span><strong id="track-total">04</strong> tracks</span>
+      <span><strong id="release-total">04</strong> releases</span>
+      <span><strong id="runtime-total">8:55</strong> runtime</span>
     </div>
 
     <div class="masthead-actions">
@@ -43,17 +44,17 @@
   <main class="experience" id="experience">
     <nav class="catalog-rail" id="catalog-rail" aria-label="Library tracks">
       <div class="rail-mobile-head">
-        <span class="rail-mobile-brand" id="rail-brand">RG Player</span>
+        <span class="rail-mobile-brand" id="rail-brand">RG Resonance</span>
         <button class="queue-close" id="queue-close" type="button" aria-label="Close track list"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="rail-heading">
         <span>Library chronology</span>
         <span class="rail-heading-rule" aria-hidden="true"></span>
-        <span class="rail-track-count" id="rail-track-count" aria-label="1 track">01</span>
+        <span class="rail-track-count" id="rail-track-count" aria-label="4 tracks">04</span>
       </div>
       <ol class="track-list" id="track-list"></ol>
       <div class="rail-foot">
-        <div class="rail-context"><span>Private listening room</span><span>Provider-ready</span></div>
+        <div class="rail-context"><span>Personal listening room</span><span>Resonance studies</span></div>
         <div class="rail-links"><a href="about.html"><span>About</span><span aria-hidden="true">›</span></a></div>
       </div>
     </nav>
@@ -64,12 +65,12 @@
       <canvas id="visualizer-canvas" aria-hidden="true"></canvas>
       <div class="visual-anchor" id="visual-anchor">
         <div class="cover-frame">
-          <img id="stage-cover" src="assets/demo/demo-cover.svg" alt="Signal Study cover art">
+          <img id="stage-cover" src="assets/resonance/artwork/2024-julez-somewhere.jpg" alt="Somewhere cover art">
           <div class="cover-sheen" aria-hidden="true"></div>
           <div class="cover-border-orbit" aria-hidden="true"><i></i><i></i></div>
           <svg class="cover-border-trace" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="98" height="98" pathLength="1"/></svg>
         </div>
-        <div class="release-caption"><span id="release-year">2026</span><span class="caption-rule" aria-hidden="true"></span><span id="release-name">Signal Study</span></div>
+        <div class="release-caption"><span id="release-year">2024</span><span class="caption-rule" aria-hidden="true"></span><span id="release-name">Somewhere — Single</span></div>
       </div>
 
       <div class="stage-meter" aria-hidden="true"><span>B</span><i id="bass-meter"></i><span>M</span><i id="mid-meter"></i><span>T</span><i id="treble-meter"></i></div>
@@ -79,15 +80,15 @@
     </section>
 
     <aside class="player-panel" aria-label="Player controls">
-      <div class="player-status"><span class="signal-dot" aria-hidden="true"></span><span id="playback-status">Ready to play</span><span id="track-position">01 / 01</span></div>
-      <div class="now-playing"><p class="eyebrow" id="now-release">Signal Study</p><h1 id="track-title">Calibration Pulse</h1><p class="artist-name" id="artist-name">RG Player</p></div>
+      <div class="player-status"><span class="signal-dot" aria-hidden="true"></span><span id="playback-status">Ready to play</span><span id="track-position">01 / 04</span></div>
+      <div class="now-playing"><p class="eyebrow" id="now-release">Somewhere — Single</p><h1 id="track-title">Somewhere</h1><p class="artist-name" id="artist-name">julez</p></div>
       <div class="timeline">
         <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Track position">
-        <div class="time-row"><time id="elapsed" datetime="PT0S">0:00</time><time id="duration" datetime="PT12S">0:12</time></div>
+        <div class="time-row"><time id="elapsed" datetime="PT0S">0:00</time><time id="duration" datetime="PT1M31.917S">1:32</time></div>
       </div>
       <div class="transport">
         <button id="previous-button" type="button" aria-label="Previous track"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M18 6.5 9 12l9 5.5z"/></svg></button>
-        <button class="play-button" id="play-button" type="button" aria-label="Play Calibration Pulse"><svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+        <button class="play-button" id="play-button" type="button" aria-label="Play Somewhere"><svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
         <button id="next-button" type="button" aria-label="Next track"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M6 6.5l9 5.5-9 5.5z"/></svg></button>
       </div>
       <div class="utility-row">
@@ -95,19 +96,19 @@
         <input id="volume" type="range" min="0" max="1" value="0.82" step="0.01" aria-label="Volume"><span id="volume-value">82</span><span class="device-volume-note">Device volume</span>
       </div>
       <div class="palette-block">
-        <div class="palette-heading"><span>Artwork signal</span><span id="release-count">Release 01 / 01</span></div>
+        <div class="palette-heading"><span>Artwork signal</span><span id="release-count">Release 01 / 04</span></div>
         <div class="palette-swatches" id="palette-swatches" aria-label="Active artwork palette"></div>
         <div class="visual-intensity"><span>Visual intensity</span><div class="intensity-options" role="group" aria-label="Visual intensity"><button type="button" data-intensity="standard" aria-pressed="false">Standard</button><button type="button" data-intensity="high" aria-pressed="true">High</button></div></div>
       </div>
-      <div class="source-row"><span>Library source</span><a id="release-link" href="about.html">Release data ↗</a></div>
-      <div class="rights-row" aria-label="Current track rights and source"><p id="rights-credit">Generated calibration audio for RG Player.</p><a id="track-source-link" href="about.html">Track source ↗</a></div>
+      <div class="source-row"><span>Release source</span><a id="release-link" href="https://music.apple.com/us/album/somewhere/1734039514?i=1734039515" target="_blank" rel="noopener">Release data ↗</a></div>
+      <div class="rights-row" aria-label="Current track rights and source"><p id="rights-credit">All rights go to julez.</p><a id="track-source-link" href="https://www.youtube.com/watch?v=adND60NazvU" target="_blank" rel="noopener">Official source ↗</a></div>
     </aside>
   </main>
 
   <footer class="site-footer">
-    <p class="footer-rights"><span id="catalog-rights">Generated calibration audio for RG Player.</span><span aria-hidden="true"> · </span><span id="archive-credit">Player by RG.</span></p>
-    <p>Private personal library · artwork-reactive playback</p>
-    <p class="footer-state"><span id="audio-format">WAV</span><span aria-hidden="true">·</span><span>No tracking</span></p>
+    <p class="footer-rights"><span id="catalog-rights">All rights remain with the respective artists and labels.</span><span aria-hidden="true"> · </span><span id="archive-credit">Player and library by RG.</span></p>
+    <p>Personal resonance library · artwork-reactive playback</p>
+    <p class="footer-state"><span id="audio-format">M4A</span><span aria-hidden="true">·</span><span>No tracking</span></p>
   </footer>
 
   <audio id="audio" preload="metadata" playsinline></audio>

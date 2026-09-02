@@ -40,6 +40,7 @@ const elements = {
   muteButton: document.querySelector("#mute-button"),
   volume: document.querySelector("#volume"),
   volumeValue: document.querySelector("#volume-value"),
+  audioFormat: document.querySelector("#audio-format"),
   shareButton: document.querySelector("#share-button"),
   queueButton: document.querySelector("#queue-button"),
   queueClose: document.querySelector("#queue-close"),
@@ -251,6 +252,7 @@ async function selectTrack(index, { autoplay = false, updateHistory = true } = {
   transitionCover(release, track);
 
   elements.trackTitle.textContent = track.title;
+  elements.artistName.textContent = track.artist;
   elements.nowRelease.textContent = releaseDisplayName(release);
   elements.releaseYear.textContent = release.releaseDate.slice(0, 4);
   elements.releaseName.textContent = releaseDisplayName(release);
@@ -260,8 +262,9 @@ async function selectTrack(index, { autoplay = false, updateHistory = true } = {
   updateRights(track);
   elements.duration.textContent = formatTime(track.durationMs / 1000, track.durationMs % 1000 !== 0);
   elements.duration.dateTime = track.durationIso;
+  elements.audioFormat.textContent = (track.audio.container || track.audio.mimeType?.split("/").at(-1) || "Audio").toUpperCase();
   elements.playButton.setAttribute("aria-label", `Play ${track.title}`);
-  document.title = `${track.title} — ${track.artist} · RG Player`;
+  document.title = `${track.title} — ${track.artist} · RG Resonance`;
   updateMediaSession(track, release);
   if (updateHistory) updateUrl(track);
 

@@ -1,0 +1,54 @@
+name: Deploy RG Resonance
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out player
+        uses: actions/checkout@v4
+        with:
+          path: site
+
+      - name: Check out private music archive
+        uses: actions/checkout@v4
+        with:
+          repository: doomswitch541-prog/music-archive
+          ssh-key: ${{ secrets.ARCHIVE_DEPLOY_KEY }}
+          path: archive
+
+      - name: Assemble public player artifact
+        shell: bash
+        run: |
+          rm -rf site/assets/resonance
+          mkdir -p site/assets/resonance
+          cp -R archive/library/resonance/audio site/assets/resonance/audio
+          cp -R archive/library/resonance/artwork site/assets/resonance/artwork
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

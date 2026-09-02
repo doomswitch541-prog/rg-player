@@ -1,11 +1,11 @@
-# RG Player
+# RG Resonance
 
-Private, phone-first, artwork-reactive music player by RG.
+Phone-first, artwork-reactive resonance reference player by RG.
 
-The repository is deliberately band-neutral. Its bundled **Signal Study** is a
-short generated calibration fixture, not an artist release. Replace
-`data/library.json` with a real personal catalog and keep per-track rights and
-source provenance attached to every entry.
+The current reference library pairs **Somewhere** by julez with **Hope To See
+You Again** by Antent, then adds each official slowed variant as a controlled
+comparison. All four full tracks use official release/source metadata and
+artwork-led palettes while sharing the same native Web Audio visualizer.
 
 ## Run locally
 
@@ -45,15 +45,15 @@ code. Provider records contain no credentials.
 
 Every track must include a merged rights record with:
 
-- status (`direct-permission`, `licensed`, `public-domain`, or `unknown`)
+- status (`direct-permission`, `licensed`, `all-rights-reserved`, `public-domain`, or `unknown`)
 - rights holder
 - human-readable credit
 - official source label and URL
 - license name and URL when licensed
 
-Do not publish entries whose status is `unknown`. The full schema and rationale
-live in `media-tools/audio-reactivity/contracts/library-manifest.schema.json`
-and `MEDIA-LIBRARY-CONTRACT.md`.
+The full schema and rationale live in
+`media-tools/audio-reactivity/contracts/library-manifest.schema.json` and
+`MEDIA-LIBRARY-CONTRACT.md`.
 
 ## Design boundary
 
