@@ -1,5 +1,5 @@
-import { ArtworkVisualizer } from "./visualizer.js?v=20260901-1";
-import { resolveReleaseArtwork, resolveTrackAudio } from "./media-provider.js?v=20260901-1";
+import { ArtworkVisualizer } from "./visualizer.js?v=20260901-3";
+import { resolveReleaseArtwork, resolveTrackAudio } from "./media-provider.js?v=20260901-3";
 
 const elements = {
   audio: document.querySelector("#audio"),

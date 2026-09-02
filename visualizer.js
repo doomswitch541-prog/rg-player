@@ -1,11 +1,11 @@
 const TAU = Math.PI * 2;
 
 export const VISUAL_OBJECT_SIGNAL_CONTRACT = Object.freeze({
-  fieldHexagon: "low-band body, mid-band body, and positive transient impact",
-  spectrumRing: "mid-band body plus live spectrum-bin contour",
-  chronologyDots: "band-mapped accents: low, mid, and high in repeating node order",
+  fieldHexagon: "low-band body, mid-band body, and relative transient rebound",
+  spectrumRing: "mid/treble body, live spectrum-bin contour, and relative transient articulation",
+  chronologyDots: "sparse band-mapped relative onsets and sustained accents in repeating node order",
   outerHalo: "low-band depth with overall energy and late-track progress glow",
-  paletteField: "full-palette travel accelerated by energy, band motion, flux, and impact",
+  paletteField: "full-palette travel accelerated by energy, band motion, flux, impact, and relative transients",
   bmtMeters: "smoothed low, mid, and high band signals",
   coverCorners: "timed accents mixed with detected loud-to-quiet contrast",
   progressArc: "playback position only"
@@ -156,6 +156,14 @@ export class ArtworkVisualizer {
     this.bandRangesReady = false;
     this.bandImpacts = [0, 0, 0];
     this.impactEnergy = 0;
+    this.eventRangeReady = false;
+    this.fluxFloor = 0;
+    this.fluxCeiling = 0.02;
+    this.impactFloor = 0;
+    this.impactCeiling = 0.012;
+    this.relativeFlux = 0;
+    this.relativeImpact = 0;
+    this.transientDrive = 0;
     this.fastEnergy = 0;
     this.slowEnergy = 0;
     this.palettePhase = 0;
@@ -249,6 +257,14 @@ export class ArtworkVisualizer {
     this.bandRangesReady = false;
     this.bandImpacts = [0, 0, 0];
     this.impactEnergy = 0;
+    this.eventRangeReady = false;
+    this.fluxFloor = 0;
+    this.fluxCeiling = 0.02;
+    this.impactFloor = 0;
+    this.impactCeiling = 0.012;
+    this.relativeFlux = 0;
+    this.relativeImpact = 0;
+    this.transientDrive = 0;
     if (this.nodePulseOrder.length !== count) this.resetNodePulseOrder();
   }
 
@@ -282,6 +298,14 @@ export class ArtworkVisualizer {
       return active;
     }, []);
 
+    const ringArticulation = Math.min(1, this.visualMids * 0.5 + this.visualTreble * 0.25 + this.transientDrive * 0.25);
+    const haloDepth = Math.min(1, this.visualBass * 0.72 + this.audioEnergy * 0.28);
+    const vertexTexture = Math.min(1,
+      (Math.max(this.visualBass, this.visualMids, this.visualTreble)
+        - Math.min(this.visualBass, this.visualMids, this.visualTreble)) * 0.7
+      + this.transientDrive * 0.3
+    );
+
     return {
       schemaVersion: 1,
       trackId: this.trackId,
@@ -293,12 +317,18 @@ export class ArtworkVisualizer {
         bandMotion: Number(this.bandMotion.toFixed(4)),
         flux: Number(this.audioFlux.toFixed(4)),
         impact: Number(this.impactEnergy.toFixed(4)),
+        relativeFlux: Number(this.relativeFlux.toFixed(4)),
+        relativeImpact: Number(this.relativeImpact.toFixed(4)),
+        transientDrive: Number(this.transientDrive.toFixed(4)),
         dropContrast: Number(this.dropContrast.toFixed(4))
       },
       outputs: {
         bands: [this.visualBass, this.visualMids, this.visualTreble].map((value) => Number(value.toFixed(4))),
         energy: Number(this.audioEnergy.toFixed(4)),
         fieldScale: Number(this.fieldScale.toFixed(4)),
+        ringArticulation: Number(ringArticulation.toFixed(4)),
+        haloDepth: Number(haloDepth.toFixed(4)),
+        vertexTexture: Number(vertexTexture.toFixed(4)),
         palettePhase: Number(this.palettePhase.toFixed(4)),
         paletteVelocity: Number(this.paletteVelocity.toFixed(4)),
         activeNodePulses,
@@ -386,7 +416,7 @@ export class ArtworkVisualizer {
     this.nodePulses[index] = {
       startedAt: time,
       duration: 480 + bandEnergy * 420 + this.nextRandom() * 240,
-      strength: 0.48 + Math.min(1, bandEnergy) * 0.64 + this.audioFlux * 0.9,
+      strength: 0.48 + Math.min(1, bandEnergy) * 0.64 + this.audioFlux * 0.9 + this.transientDrive * 0.18,
       colorPosition: this.palettePhase + bandOffset + (this.nextRandom() - 0.5) * 0.08
     };
     this.nodePulseCount += 1;
@@ -401,7 +431,8 @@ export class ArtworkVisualizer {
       band: ["low", "mid", "high"][band],
       bandEnergy: Number(bandEnergy.toFixed(4)),
       strength: Number(this.nodePulses[index].strength.toFixed(4)),
-      flux: Number(this.audioFlux.toFixed(4))
+      flux: Number(this.audioFlux.toFixed(4)),
+      transientDrive: Number(this.transientDrive.toFixed(4))
     });
     const interval = 1750 + this.nextRandom() * 1250 - this.audioEnergy * 720;
     this.nextNodePulseAt = time + Math.max(820, interval);
@@ -412,11 +443,16 @@ export class ArtworkVisualizer {
     if (!playing) return;
     if (!this.nodePulseOrder.length) this.resetNodePulseOrder();
     if (!this.nextNodePulseAt) this.nextNodePulseAt = time + 420;
-    const onset = this.audioFlux > 0.032 && time - this.lastNodePulseAt > 760;
+    const absoluteOnset = this.audioFlux > 0.032 && time - this.lastNodePulseAt > 760;
+    const relativeOnset = this.transientDrive > 0.78
+      && (this.relativeFlux > 0.7 || this.relativeImpact > 0.7)
+      && this.audioFlux > 0.009
+      && time - this.lastNodePulseAt > 1500;
+    const onset = absoluteOnset || relativeOnset;
     const sustainedAccent = time >= this.nextNodePulseAt
       && this.audioEnergy > 0.14
       && (this.bandMotion > 0.006 || this.audioFlux > 0.012);
-    if (onset || sustainedAccent) this.triggerNodePulse(time, onset ? "onset" : "sustained-accent");
+    if (onset || sustainedAccent) this.triggerNodePulse(time, relativeOnset ? "relative-onset" : onset ? "onset" : "sustained-accent");
   }
 
   resize() {
@@ -542,6 +578,38 @@ export class ArtworkVisualizer {
     this.bandImpacts = this.bandImpacts.map((impact, index) => followBand(impact, positiveBands[index], 0.52, 0.11));
     this.impactEnergy = this.bandImpacts[0] * 0.5 + this.bandImpacts[1] * 0.34 + this.bandImpacts[2] * 0.16;
 
+    let transientTarget = 0;
+    if (playing) {
+      if (!this.eventRangeReady && targetEnergy > 0.02) {
+        this.fluxFloor = Math.max(0, this.audioFlux - 0.004);
+        this.fluxCeiling = Math.max(0.012, this.audioFlux + 0.012);
+        this.impactFloor = Math.max(0, this.impactEnergy - 0.003);
+        this.impactCeiling = Math.max(0.008, this.impactEnergy + 0.008);
+        this.eventRangeReady = true;
+      }
+      if (this.eventRangeReady) {
+        this.fluxFloor += (this.audioFlux - this.fluxFloor) * (this.audioFlux < this.fluxFloor ? 0.08 : 0.0012);
+        this.fluxCeiling += (this.audioFlux - this.fluxCeiling) * (this.audioFlux > this.fluxCeiling ? 0.065 : 0.0018);
+        this.impactFloor += (this.impactEnergy - this.impactFloor) * (this.impactEnergy < this.impactFloor ? 0.085 : 0.0012);
+        this.impactCeiling += (this.impactEnergy - this.impactCeiling) * (this.impactEnergy > this.impactCeiling ? 0.07 : 0.0018);
+        this.relativeFlux = Math.max(0, Math.min(1,
+          (this.audioFlux - this.fluxFloor) / Math.max(0.008, this.fluxCeiling - this.fluxFloor)
+        ));
+        this.relativeImpact = Math.max(0, Math.min(1,
+          (this.impactEnergy - this.impactFloor) / Math.max(0.005, this.impactCeiling - this.impactFloor)
+        ));
+      }
+      transientTarget = Math.max(0, Math.min(1,
+        this.relativeFlux * 0.56
+        + this.relativeImpact * 0.34
+        + Math.max(0, Math.min(1, this.bandMotion / 0.035)) * 0.1
+      ));
+    } else {
+      this.relativeFlux = 0;
+      this.relativeImpact = 0;
+    }
+    this.transientDrive = followBand(this.transientDrive, transientTarget, 0.48, 0.12);
+
     let responsiveBass = 0;
     let responsiveMids = 0;
     let responsiveTreble = 0;
@@ -610,6 +678,7 @@ export class ArtworkVisualizer {
     else if (accentReady) this.triggerCornerSweep(time, "accent", 0.58 + this.audioEnergy * 0.45);
     const targetPaletteVelocity = playing
       ? 0.008 + this.rawEnergy * 0.05 + this.bandMotion * 2.35 + this.audioFlux * 2.6 + this.impactEnergy * 3.4
+        + Math.max(0, this.transientDrive - 0.5) * 0.025
       : 0.006;
     this.paletteVelocity = followBand(this.paletteVelocity, targetPaletteVelocity, 0.34, 0.075);
     const motionScale = this.reducedMotion ? 0.3 : 1;
@@ -626,6 +695,9 @@ export class ArtworkVisualizer {
     this.stage.dataset.treble = visualTreble.toFixed(3);
     this.stage.dataset.audioFlux = this.audioFlux.toFixed(4);
     this.stage.dataset.impactEnergy = this.impactEnergy.toFixed(4);
+    this.stage.dataset.relativeFlux = this.relativeFlux.toFixed(4);
+    this.stage.dataset.relativeImpact = this.relativeImpact.toFixed(4);
+    this.stage.dataset.transientDrive = this.transientDrive.toFixed(4);
     this.stage.dataset.paletteVelocity = this.paletteVelocity.toFixed(4);
     const progress = this.audio.duration ? this.audio.currentTime / this.audio.duration : 0;
     this.stage.style.setProperty("--progress", progress.toFixed(4));
@@ -671,9 +743,10 @@ export class ArtworkVisualizer {
     const bass = this.visualBass;
     const mids = this.visualMids;
     const treble = this.visualTreble;
-    const punch = Math.min(0.08, this.impactEnergy * 1.4 + this.audioFlux * 0.18);
+    const transientAccent = Math.max(0, this.transientDrive - 0.5) * 0.02;
+    const punch = Math.min(0.08, this.impactEnergy * 1.4 + this.audioFlux * 0.18 + transientAccent);
     const fieldTarget = Math.min(1.56, 1.22 + bass * 0.22 + mids * 0.12 + punch * 1.05);
-    this.fieldScale = followBand(this.fieldScale, fieldTarget, 0.18, 0.075);
+    this.fieldScale = followBand(this.fieldScale, fieldTarget, 0.2 + this.transientDrive * 0.04, 0.085);
     this.stage.style.setProperty("--field-scale", this.fieldScale.toFixed(4));
     this.stage.style.setProperty("--field-rotation", "0");
     this.stage.dataset.fieldScale = this.fieldScale.toFixed(4);
@@ -905,7 +978,8 @@ export class ArtworkVisualizer {
         ? this.frequencyData[Math.min(this.frequencyData.length - 1, Math.floor(normalized * 84))] / 255
         : 0;
       const symmetry = Math.abs(Math.sin(angle * 3.5));
-      const amplitude = midBody * (0.3 + bin * 0.8) + symmetry * this.visualTreble * 5;
+      const articulation = this.transientDrive * (1.2 + bin * 2.8);
+      const amplitude = midBody * (0.3 + bin * 0.8) + symmetry * this.visualTreble * 5 + articulation;
       const currentRadius = radius * 1.28 + amplitude;
       const x = Math.cos(angle) * currentRadius;
       const y = Math.sin(angle) * currentRadius;
@@ -914,10 +988,10 @@ export class ArtworkVisualizer {
     }
 
     ctx.closePath();
-    ctx.strokeStyle = rgba(spectrumColor, 0.38 + this.visualMids * 0.5 + this.audioFlux * 0.28);
-    ctx.lineWidth = 1.15 + this.visualMids * 2 + this.audioFlux * 1.3;
+    ctx.strokeStyle = rgba(spectrumColor, 0.38 + this.visualMids * 0.5 + this.audioFlux * 0.28 + this.transientDrive * 0.12);
+    ctx.lineWidth = 1.15 + this.visualMids * 2 + this.audioFlux * 1.3 + this.transientDrive * 0.5;
     ctx.shadowColor = rgba(spectrumColor, 0.58);
-    ctx.shadowBlur = 6 + this.visualTreble * 9;
+    ctx.shadowBlur = 6 + this.visualTreble * 9 + this.transientDrive * 5;
     ctx.stroke();
     ctx.restore();
   }
