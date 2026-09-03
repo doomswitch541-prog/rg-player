@@ -1,4 +1,4 @@
-name: Deploy RG Resonance
+name: Deploy RG Player
 
 on:
   push:

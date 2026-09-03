@@ -5,24 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#04131d">
   <meta name="color-scheme" content="dark">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="RG Resonance — two artwork-reactive reference tracks for studying felt musical resonance.">
+  <meta name="robots" content="index, follow">
+  <meta name="description" content="RG Player — a phone-first, artwork-reactive listening instrument.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="RG Player">
+  <meta property="og:description" content="Music gives it color. Explore artwork-reactive listening rooms built for phones.">
+  <meta property="og:url" content="https://doomswitch541-prog.github.io/rg-player/">
+  <meta property="og:image" content="https://doomswitch541-prog.github.io/rg-player/assets/share/rg-player-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="RG Player artwork-reactive visual field">
+  <meta name="twitter:card" content="summary_large_image">
   <title>RG Player</title>
   <link rel="icon" type="image/jpeg" href="assets/resonance/artwork/2024-julez-somewhere.jpg">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=20260902-2">
-  <script type="module" src="app.js?v=20260902-2"></script>
+  <link rel="stylesheet" href="styles.css?v=20260903-1">
+  <script type="module" src="app.js?v=20260903-1"></script>
 </head>
 <body>
   <div class="art-wash" id="art-wash" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
 
   <header class="masthead">
-    <a class="identity" href="#experience" aria-label="RG Resonance home">
+    <a class="identity" href="#experience" aria-label="RG Player home">
       <span class="identity-mark"><span id="identity-mark">RG</span></span>
       <span class="identity-copy">
-        <strong id="identity-name">RG Resonance</strong>
-        <small id="identity-subtitle">Resonance reference player</small>
+        <strong id="identity-name">RG Player</strong>
+        <small id="identity-subtitle">Artwork-reactive listening room</small>
       </span>
     </a>
 
@@ -45,7 +54,7 @@
   <main class="experience" id="experience">
     <nav class="catalog-rail" id="catalog-rail" aria-label="Library tracks">
       <div class="rail-mobile-head">
-        <span class="rail-mobile-brand" id="rail-brand">RG Resonance</span>
+        <span class="rail-mobile-brand" id="rail-brand">RG Player</span>
         <button class="queue-close" id="queue-close" type="button" aria-label="Close track list"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="catalog-scroll" id="catalog-scroll">
@@ -83,11 +92,22 @@
       <button class="stage-action fullscreen-button" id="fullscreen-button" type="button" aria-label="Enter full visualizer view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
       <button class="stage-action queue-button" id="queue-button" type="button" aria-label="Open track list" aria-controls="catalog-rail" aria-expanded="false"><span class="bars" aria-hidden="true"><span></span><span></span><span></span></span></button>
       <details class="visual-mode-control" id="visual-mode-control">
-        <summary aria-label="Choose visualization mode"><span>Mode</span><strong id="visual-mode-label">Balanced</strong><i aria-hidden="true"></i></summary>
-        <div class="visual-mode-menu" role="group" aria-label="Visualization mode">
-          <button type="button" data-visual-mode="balanced" aria-pressed="true"><strong>Balanced</strong><small>Full spectrum</small></button>
-          <button type="button" data-visual-mode="melody" aria-pressed="false"><strong>Melody</strong><small>Tonal motion</small></button>
-          <button type="button" data-visual-mode="impact" aria-pressed="false"><strong>Impact</strong><small>Bass + transients</small></button>
+        <summary aria-label="Choose a visual room"><span>View</span><strong>Hex Field</strong><i aria-hidden="true"></i></summary>
+        <div class="visual-mode-menu" aria-label="Visual rooms and Hex Field response">
+          <p class="visual-mode-heading">Visual rooms</p>
+          <a class="visual-room-option is-current" href="index.html" aria-current="page">
+            <span class="visual-room-index">01</span><span><strong>Hex Field</strong><small>Artwork palette geometry</small></span><i aria-hidden="true"></i>
+          </a>
+          <a class="visual-room-option" href="visuals/night-transmission.html">
+            <span class="visual-room-index">02</span><span><strong>Night Transmission</strong><small>Y2K archive telemetry</small></span><i aria-hidden="true"></i>
+          </a>
+          <a class="visual-room-all" href="visuals/">Browse visual rooms <span aria-hidden="true">↗</span></a>
+          <div class="visual-response-group" role="group" aria-label="Hex Field signal response">
+            <p class="visual-mode-heading"><span>Hex Field response</span><strong id="visual-mode-label">Balanced</strong></p>
+            <button type="button" data-visual-mode="balanced" aria-pressed="true"><strong>Balanced</strong><small>Full spectrum</small></button>
+            <button type="button" data-visual-mode="melody" aria-pressed="false"><strong>Melody</strong><small>Tonal motion</small></button>
+            <button type="button" data-visual-mode="impact" aria-pressed="false"><strong>Impact</strong><small>Bass + transients</small></button>
+          </div>
         </div>
       </details>
       <div class="gesture-note" id="gesture-note" aria-hidden="true">Artwork colors move with the song</div>

@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#050606">
   <meta name="color-scheme" content="dark">
-  <meta name="robots" content="noindex, nofollow">
+  <meta name="robots" content="index, follow">
   <meta name="description" content="Night Transmission — a Y2K archive visual room for RG Player.">
   <title>Night Transmission — RG Player</title>
   <link rel="icon" type="image/png" href="../assets/icons/apple-touch-icon.png">
   <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="visuals.css?v=20260902-1">
-  <link rel="stylesheet" href="night-transmission.css?v=20260902-2">
-  <script type="module" src="night-transmission.js?v=20260902-2"></script>
+  <link rel="stylesheet" href="visuals.css?v=20260903-1">
+  <link rel="stylesheet" href="night-transmission.css?v=20260903-1">
+  <script type="module" src="night-transmission.js?v=20260903-1"></script>
 </head>
 <body class="transmission-page">
   <div class="transmission-backdrop" id="transmission-backdrop" aria-hidden="true"></div>
@@ -98,14 +98,19 @@
   </main>
 
   <section class="transmission-player" aria-label="Night Transmission player">
-    <button id="previous-button" type="button" aria-label="Previous track">←</button>
-    <button class="transmission-play" id="play-button" type="button" aria-label="Play Somewhere"><span id="play-symbol">▶</span></button>
-    <button id="next-button" type="button" aria-label="Next track">→</button>
-    <label class="track-picker"><span>TRACK</span><select id="track-select" aria-label="Choose track"></select></label>
+    <div class="transmission-transport" aria-label="Playback controls">
+      <button id="previous-button" type="button" aria-label="Previous track"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5v14M18 6.5 9 12l9 5.5z"/></svg></button>
+      <button class="transmission-play" id="play-button" type="button" aria-label="Play Somewhere">
+        <svg class="transmission-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
+        <svg class="transmission-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+      </button>
+      <button id="next-button" type="button" aria-label="Next track"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 5v14M6 6.5l9 5.5-9 5.5z"/></svg></button>
+    </div>
+    <label class="track-picker"><span class="track-picker-head"><span>TRACK</span><strong id="player-track-number">01 / 04</strong></span><select id="track-select" aria-label="Choose track"></select></label>
     <label class="transmission-seek"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Track position"><span id="duration">1:32</span></label>
     <label class="transmission-volume"><span>VOL</span><input id="volume" type="range" min="0" max="1" value="0.82" step="0.01" aria-label="Volume"><output id="volume-value">82</output></label>
   </section>
 
-  <audio id="audio" preload="metadata" playsinline></audio>
+  <audio id="audio" preload="auto" playsinline></audio>
 </body>
 </html>

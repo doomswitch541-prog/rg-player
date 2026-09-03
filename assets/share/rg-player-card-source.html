@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1200, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
+    body {
+      position: relative;
+      color: #edf4ef;
+      background:
+        radial-gradient(circle at 78% 45%, rgba(67, 153, 187, .25), transparent 28%),
+        radial-gradient(circle at 12% 105%, rgba(109, 48, 65, .24), transparent 38%),
+        #050706;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .35;
+      background:
+        repeating-linear-gradient(0deg, transparent 0 8px, rgba(164, 224, 238, .025) 9px),
+        linear-gradient(90deg, transparent 49.9%, rgba(190, 235, 241, .08) 50%, transparent 50.1%);
+    }
+    .frame { position: absolute; inset: 28px; border: 1px solid rgba(207, 235, 231, .22); }
+    .frame::before, .frame::after { content: ""; position: absolute; background: #91e6f1; box-shadow: 0 0 22px #58bbd4; }
+    .frame::before { width: 118px; height: 2px; left: 22px; top: -1px; }
+    .frame::after { width: 2px; height: 78px; right: -1px; bottom: 26px; }
+    .micro {
+      position: absolute;
+      top: 56px;
+      left: 68px;
+      font: 12px/1 monospace;
+      letter-spacing: .24em;
+      color: #9edbe4;
+    }
+    .copy { position: absolute; z-index: 3; left: 68px; top: 168px; width: 620px; }
+    .copy h1 { margin: 0; font-size: 112px; line-height: .78; letter-spacing: -.085em; font-weight: 900; font-style: italic; }
+    .copy h1 span { display: block; color: #9ee8f4; }
+    .copy p { margin: 38px 0 0 5px; font: 17px/1.3 monospace; letter-spacing: .18em; color: #b7c1bd; }
+    .art-field { position: absolute; z-index: 2; top: 72px; right: 78px; width: 450px; height: 450px; }
+    .hex, .hex-glow {
+      position: absolute;
+      inset: 24px;
+      clip-path: polygon(25% 7%, 75% 7%, 99% 50%, 75% 93%, 25% 93%, 1% 50%);
+    }
+    .hex-glow { inset: 0; background: linear-gradient(140deg, #91e6f1, #8f657b 58%, #d9a927); filter: blur(22px); opacity: .38; }
+    .hex { padding: 3px; background: linear-gradient(135deg, #d8fafc, #55b3d0 48%, #e2ad31); }
+    .hex img { width: 100%; height: 100%; object-fit: cover; clip-path: inherit; filter: saturate(.82) contrast(1.15) brightness(.8); }
+    .orbit { position: absolute; inset: -20px; border: 1px dashed rgba(166, 230, 240, .42); border-radius: 50%; transform: rotate(-14deg); }
+    .orbit i { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #bdf7ff; box-shadow: 0 0 15px 4px #57bdd7; }
+    .orbit i:nth-child(1) { top: 10%; left: 22%; }
+    .orbit i:nth-child(2) { right: -3px; top: 54%; }
+    .orbit i:nth-child(3) { left: 25%; bottom: 2%; background: #e9b629; box-shadow: 0 0 14px 3px #e9b629; }
+    .readout { position: absolute; z-index: 4; right: 62px; bottom: 64px; display: grid; grid-template-columns: repeat(3, auto); gap: 8px; }
+    .readout span { padding: 8px 10px; border: 1px solid rgba(207, 235, 231, .25); background: rgba(5,7,6,.82); font: 9px/1 monospace; letter-spacing: .14em; }
+    .footer { position: absolute; z-index: 4; left: 68px; bottom: 66px; color: #7f918c; font: 10px/1 monospace; letter-spacing: .19em; }
+    .bars { position: absolute; z-index: 1; left: 63px; bottom: 104px; display: flex; align-items: end; gap: 5px; height: 58px; opacity: .42; }
+    .bars i { width: 3px; background: #9ee8f4; }
+    .bars i:nth-child(1) { height: 14px; }.bars i:nth-child(2) { height: 34px; }.bars i:nth-child(3) { height: 22px; }
+    .bars i:nth-child(4) { height: 48px; }.bars i:nth-child(5) { height: 28px; }.bars i:nth-child(6) { height: 39px; }
+    .bars i:nth-child(7) { height: 17px; }.bars i:nth-child(8) { height: 52px; }.bars i:nth-child(9) { height: 31px; }
+  </style>
+</head>
+<body>
+  <div class="frame"></div>
+  <div class="micro">RG ARCHIVE // AUDIO-REACTIVE LISTENING SYSTEM</div>
+  <div class="copy"><h1>RG <span>PLAYER</span></h1><p>MUSIC GIVES IT COLOR.</p></div>
+  <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="art-field"><div class="hex-glow"></div><div class="orbit"><i></i><i></i><i></i></div><div class="hex"><img src="../resonance/artwork/2024-julez-somewhere.jpg" alt=""></div></div>
+  <div class="footer">04 TRACKS / 02 ARTISTS / VISUAL ROOMS</div>
+  <div class="readout"><span>HEX FIELD</span><span>NIGHT TRANSMISSION</span><span>PHONE FIRST</span></div>
+</body>
+</html>

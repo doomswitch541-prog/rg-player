@@ -3,6 +3,7 @@ import { resolveReleaseArtwork, resolveTrackAudio } from "../media-provider.js?v
 const elements = {
   audio: document.querySelector("#audio"),
   backdrop: document.querySelector("#transmission-backdrop"),
+  heroCopy: document.querySelector(".hero-copy"),
   trackCode: document.querySelector("#track-code"),
   trackTitle: document.querySelector("#track-title"),
   artistName: document.querySelector("#artist-name"),
@@ -28,9 +29,9 @@ const elements = {
   discCatalog: document.querySelector("#disc-catalog"),
   previousButton: document.querySelector("#previous-button"),
   playButton: document.querySelector("#play-button"),
-  playSymbol: document.querySelector("#play-symbol"),
   nextButton: document.querySelector("#next-button"),
   trackSelect: document.querySelector("#track-select"),
+  playerTrackNumber: document.querySelector("#player-track-number"),
   seek: document.querySelector("#seek"),
   elapsed: document.querySelector("#elapsed"),
   duration: document.querySelector("#duration"),
@@ -49,6 +50,7 @@ const state = {
   frequencyData: null,
   waveformData: null,
   signalLevel: 0,
+  playbackPromise: null,
   raf: 0,
   reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches
 };
@@ -107,6 +109,7 @@ function applyTrack(index, { autoplay = false, updateUrl = true } = {}) {
   state.currentIndex = nextIndex;
   elements.trackCode.textContent = `TRACK_${String(nextIndex + 1).padStart(2, "0")}`;
   elements.trackTitle.textContent = track.title;
+  elements.heroCopy.dataset.titleScale = track.title.length > 18 ? "compact" : "display";
   elements.artistName.textContent = track.artist;
   elements.mixName.textContent = versionName(track, release);
   elements.metaArtist.textContent = track.artist;
@@ -124,6 +127,7 @@ function applyTrack(index, { autoplay = false, updateUrl = true } = {}) {
   elements.discCatalog.textContent = `RG-${String(nextIndex + 1).padStart(2, "0")} / ${elements.metaYear.textContent} / DIGITAL AUDIO`;
   elements.duration.textContent = formatTime(track.durationMs / 1000, true);
   elements.trackSelect.value = track.id;
+  elements.playerTrackNumber.textContent = `${String(nextIndex + 1).padStart(2, "0")} / ${String(tracks.length).padStart(2, "0")}`;
   elements.playButton.setAttribute("aria-label", `Play ${track.title}`);
 
   const palette = release.palette;
@@ -149,44 +153,73 @@ function applyTrack(index, { autoplay = false, updateUrl = true } = {}) {
     history.replaceState({}, "", url);
   }
 
-  if (autoplay || wasPlaying) startPlayback();
+  if (autoplay || wasPlaying) void startPlayback().catch(() => {});
 }
 
 async function ensureAudioGraph() {
-  if (state.analyser) {
+  if (state.audioContext && state.analyser && state.sourceNode) {
     if (state.audioContext.state === "suspended") await state.audioContext.resume();
     return;
   }
 
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
-  state.audioContext = new AudioContextClass();
-  state.analyser = state.audioContext.createAnalyser();
-  state.analyser.fftSize = 512;
-  state.analyser.smoothingTimeConstant = 0.78;
-  state.sourceNode = state.audioContext.createMediaElementSource(elements.audio);
-  state.sourceNode.connect(state.analyser);
-  state.analyser.connect(state.audioContext.destination);
-  state.frequencyData = new Uint8Array(state.analyser.frequencyBinCount);
-  state.waveformData = new Uint8Array(state.analyser.fftSize);
-  await state.audioContext.resume();
+  const audioContext = state.audioContext || new AudioContextClass();
+  const analyser = audioContext.createAnalyser();
+  analyser.fftSize = 512;
+  analyser.smoothingTimeConstant = 0.78;
+  const sourceNode = audioContext.createMediaElementSource(elements.audio);
+  sourceNode.connect(analyser);
+  analyser.connect(audioContext.destination);
+
+  state.audioContext = audioContext;
+  state.analyser = analyser;
+  state.sourceNode = sourceNode;
+  state.frequencyData = new Uint8Array(analyser.frequencyBinCount);
+  state.waveformData = new Uint8Array(analyser.fftSize);
+  if (audioContext.state === "suspended") await audioContext.resume();
 }
 
-async function startPlayback() {
-  try {
-    const playbackAttempt = elements.audio.play();
-    const analysisAttempt = ensureAudioGraph().catch((error) => {
-      console.warn("Night Transmission playback started without audio analysis.", error);
+function reportPlaybackError(error) {
+  const mediaError = elements.audio.error;
+  if (error?.name === "NotAllowedError") setStatus("Tap play once more");
+  else if (error?.name === "NotSupportedError" || mediaError?.code === 4) setStatus("Audio format unavailable");
+  else setStatus("Playback failed — retry");
+  console.error("Night Transmission playback failed.", { error, mediaError });
+}
+
+function setPlaybackPending(pending) {
+  elements.playButton.toggleAttribute("aria-busy", pending);
+  document.body.dataset.playbackPending = String(pending);
+}
+
+function startPlayback() {
+  if (state.playbackPromise) return state.playbackPromise;
+  if (!elements.audio.paused && !elements.audio.ended) return Promise.resolve();
+
+  setPlaybackPending(true);
+  // Native playback is started synchronously inside the original tap. Web
+  // Audio analysis is optional and can never block or cancel audible playback.
+  const playbackAttempt = elements.audio.play();
+  void ensureAudioGraph().catch((error) => {
+    console.warn("Night Transmission playback started without audio analysis.", error);
+  });
+
+  state.playbackPromise = playbackAttempt
+    .catch((error) => {
+      reportPlaybackError(error);
+      throw error;
+    })
+    .finally(() => {
+      state.playbackPromise = null;
+      setPlaybackPending(false);
     });
-    await playbackAttempt;
-    await analysisAttempt;
-  } catch (error) {
-    setStatus(error?.name === "NotAllowedError" ? "Tap play to begin" : "Playback unavailable");
-  }
+  return state.playbackPromise;
 }
 
 function togglePlayback() {
-  if (elements.audio.paused) startPlayback();
+  if (state.playbackPromise) return;
+  if (elements.audio.paused) void startPlayback().catch(() => {});
   else elements.audio.pause();
 }
 
@@ -300,6 +333,7 @@ function updateTimeline() {
     : state.catalog.tracks[state.currentIndex].durationMs / 1000;
   const progress = duration > 0 ? elements.audio.currentTime / duration : 0;
   elements.seek.value = String(Math.round(progress * 1000));
+  elements.seek.style.setProperty("--seek-fill", `${progress * 100}%`);
   elements.elapsed.textContent = formatTime(elements.audio.currentTime);
   elements.duration.textContent = formatTime(duration, true);
 }
@@ -334,18 +368,21 @@ function bindEvents() {
   });
   elements.audio.addEventListener("play", () => {
     document.body.dataset.playing = "true";
-    elements.playSymbol.textContent = "Ⅱ";
     elements.playButton.setAttribute("aria-label", "Pause current track");
     elements.waveformState.textContent = "LIVE >>>";
     setStatus("Signal acquired");
   });
   elements.audio.addEventListener("pause", () => {
     document.body.dataset.playing = "false";
-    elements.playSymbol.textContent = "▶";
     const track = state.catalog.tracks[state.currentIndex];
     elements.playButton.setAttribute("aria-label", `Play ${track.title}`);
     elements.waveformState.textContent = "STANDBY >>>";
     if (elements.audio.currentTime > 0 && elements.audio.currentTime < elements.audio.duration) setStatus("Transmission paused");
+  });
+  elements.audio.addEventListener("playing", () => setStatus("Signal acquired"));
+  elements.audio.addEventListener("waiting", () => setStatus("Buffering transmission"));
+  elements.audio.addEventListener("canplay", () => {
+    if (elements.audio.paused) setStatus("Ready to play");
   });
   elements.audio.addEventListener("loadedmetadata", updateTimeline);
   elements.audio.addEventListener("timeupdate", updateTimeline);
@@ -359,7 +396,7 @@ function bindEvents() {
 
 function bindMediaSession() {
   if (!("mediaSession" in navigator)) return;
-  navigator.mediaSession.setActionHandler("play", startPlayback);
+  navigator.mediaSession.setActionHandler("play", () => startPlayback().catch(() => {}));
   navigator.mediaSession.setActionHandler("pause", () => elements.audio.pause());
   navigator.mediaSession.setActionHandler("previoustrack", () => applyTrack(state.currentIndex - 1, { autoplay: true }));
   navigator.mediaSession.setActionHandler("nexttrack", () => applyTrack(state.currentIndex + 1, { autoplay: true }));

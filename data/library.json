@@ -2,9 +2,9 @@
   "schemaVersion": 2,
   "catalogId": "rg-resonance",
   "updated": "2026-09-01",
-  "subtitle": "Resonance reference player",
+  "subtitle": "Artwork-reactive listening room",
   "artist": {
-    "name": "RG Resonance",
+    "name": "RG Player",
     "location": "Personal reference library",
     "description": "A phone-first listening instrument for studying felt resonance"
   },

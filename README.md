@@ -1,4 +1,4 @@
-# RG Resonance
+# RG Player
 
 Phone-first, artwork-reactive resonance reference player by RG.
 
