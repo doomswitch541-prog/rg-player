@@ -19,8 +19,8 @@
   <title>RG Player</title>
   <link rel="icon" type="image/jpeg" href="assets/resonance/artwork/2024-julez-somewhere.jpg">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=20260903-1">
-  <script type="module" src="app.js?v=20260903-1"></script>
+  <link rel="stylesheet" href="styles.css?v=20260903-2">
+  <script type="module" src="app.js?v=20260903-2"></script>
 </head>
 <body>
   <div class="art-wash" id="art-wash" aria-hidden="true"></div>
@@ -78,6 +78,8 @@
 
     <section class="visual-stage" id="visual-stage" aria-label="Audio-reactive artwork">
       <canvas id="visualizer-canvas" aria-hidden="true"></canvas>
+      <canvas class="liquid-chrome-canvas" id="liquid-chrome-canvas" aria-hidden="true"></canvas>
+      <canvas class="liquid-chrome-canvas liquid-chrome-fallback" id="liquid-chrome-fallback" aria-hidden="true"></canvas>
       <div class="visual-anchor" id="visual-anchor">
         <div class="cover-frame">
           <img id="stage-cover" src="assets/resonance/artwork/2024-julez-somewhere.jpg" alt="Somewhere cover art">
@@ -92,22 +94,26 @@
       <button class="stage-action fullscreen-button" id="fullscreen-button" type="button" aria-label="Enter full visualizer view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
       <button class="stage-action queue-button" id="queue-button" type="button" aria-label="Open track list" aria-controls="catalog-rail" aria-expanded="false"><span class="bars" aria-hidden="true"><span></span><span></span><span></span></span></button>
       <details class="visual-mode-control" id="visual-mode-control">
-        <summary aria-label="Choose a visual room"><span>View</span><strong>Hex Field</strong><i aria-hidden="true"></i></summary>
-        <div class="visual-mode-menu" aria-label="Visual rooms and Hex Field response">
-          <p class="visual-mode-heading">Visual rooms</p>
-          <a class="visual-room-option is-current" href="index.html" aria-current="page">
-            <span class="visual-room-index">01</span><span><strong>Hex Field</strong><small>Artwork palette geometry</small></span><i aria-hidden="true"></i>
-          </a>
-          <a class="visual-room-option" href="visuals/night-transmission.html">
-            <span class="visual-room-index">02</span><span><strong>Night Transmission</strong><small>Y2K archive telemetry</small></span><i aria-hidden="true"></i>
-          </a>
-          <a class="visual-room-all" href="visuals/">Browse visual rooms <span aria-hidden="true">↗</span></a>
-          <div class="visual-response-group" role="group" aria-label="Hex Field signal response">
-            <p class="visual-mode-heading"><span>Hex Field response</span><strong id="visual-mode-label">Balanced</strong></p>
-            <button type="button" data-visual-mode="balanced" aria-pressed="true"><strong>Balanced</strong><small>Full spectrum</small></button>
-            <button type="button" data-visual-mode="melody" aria-pressed="false"><strong>Melody</strong><small>Tonal motion</small></button>
-            <button type="button" data-visual-mode="impact" aria-pressed="false"><strong>Impact</strong><small>Bass + transients</small></button>
+        <summary id="visual-mode-summary" aria-label="Choose visual" aria-controls="visual-mode-menu" aria-expanded="false"><span>Visual</span><strong id="visual-mode-label">Hex Field</strong><i aria-hidden="true"></i></summary>
+        <button class="visual-mode-backdrop" id="visual-mode-backdrop" type="button" tabindex="-1" aria-label="Close visual menu"></button>
+        <div class="visual-mode-menu" id="visual-mode-menu" aria-label="Choose a visual">
+          <header class="visual-mode-menu-head">
+            <span>Choose visual</span>
+            <button id="visual-mode-close" type="button" aria-label="Close visual menu">×</button>
+          </header>
+          <div class="visual-mode-options" role="group" aria-label="Visualizer modes">
+            <button class="visual-mode-choice" type="button" data-visual-mode="hex-field" aria-pressed="true">
+              <span class="visual-mode-preview preview-hex" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="visual-mode-copy"><strong>Hex Field</strong><small>Artwork palette geometry</small></span>
+              <span class="visual-mode-state">Active</span>
+            </button>
+            <button class="visual-mode-choice" type="button" data-visual-mode="liquid-chrome" aria-pressed="false">
+              <span class="visual-mode-preview preview-liquid" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="visual-mode-copy"><strong>Liquid Chrome</strong><small>Artwork becomes reflective material</small></span>
+              <span class="visual-mode-state">View</span>
+            </button>
           </div>
+          <p class="visual-mode-note">The music keeps playing while the visual changes.</p>
         </div>
       </details>
       <div class="gesture-note" id="gesture-note" aria-hidden="true">Artwork colors move with the song</div>

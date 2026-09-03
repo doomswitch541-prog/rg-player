@@ -477,12 +477,53 @@ a {
   opacity: 0.46;
 }
 
-#visualizer-canvas {
+#visualizer-canvas,
+.liquid-chrome-canvas {
   position: absolute;
   z-index: 1;
   inset: 0;
   width: 100%;
   height: 100%;
+  transition: opacity 520ms var(--ease);
+}
+
+.liquid-chrome-canvas {
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.visual-stage[data-visual-mode="liquid-chrome"] #visualizer-canvas {
+  opacity: 0;
+}
+
+.visual-stage[data-visual-mode="liquid-chrome"][data-liquid-renderer="webgl"] #liquid-chrome-canvas,
+.visual-stage[data-visual-mode="liquid-chrome"][data-liquid-renderer="canvas"] #liquid-chrome-fallback {
+  opacity: 1;
+}
+
+.visual-stage[data-visual-mode="liquid-chrome"] .visual-anchor {
+  top: auto;
+  bottom: 52px;
+  width: min(58%, 390px);
+  gap: 0;
+  transform: translateX(-50%);
+}
+
+.visual-stage[data-visual-mode="liquid-chrome"] .cover-frame {
+  height: 0;
+  aspect-ratio: auto;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.visual-stage[data-visual-mode="liquid-chrome"] .release-caption {
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(14px);
 }
 
 .visual-anchor {
@@ -755,6 +796,8 @@ body[data-queue-open="true"] .queue-button .bars > span:last-child {
 }
 
 .visual-mode-control summary {
+  position: relative;
+  z-index: 3;
   display: grid;
   min-width: 146px;
   min-height: 44px;
@@ -814,6 +857,193 @@ body[data-queue-open="true"] .queue-button .bars > span:last-child {
   box-shadow: 0 22px 55px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(22px) saturate(130%);
   clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+}
+
+.visual-mode-backdrop {
+  position: fixed;
+  z-index: 1;
+  inset: 0;
+  display: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.visual-mode-control[open] .visual-mode-backdrop {
+  display: block;
+}
+
+.visual-mode-control[open] .visual-mode-menu {
+  z-index: 2;
+}
+
+.visual-mode-menu-head {
+  display: flex;
+  min-height: 42px;
+  padding: 4px 5px 4px 10px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+.visual-mode-menu-head button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.visual-mode-menu-head button:hover,
+.visual-mode-menu-head button:focus-visible {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.visual-mode-options {
+  display: grid;
+  gap: 1px;
+  padding-top: 1px;
+  background: var(--hairline);
+}
+
+.visual-mode-choice {
+  display: grid;
+  min-height: 92px;
+  padding: 10px;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg) 96%, var(--surface));
+  cursor: pointer;
+  text-align: left;
+  text-transform: none;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.visual-mode-choice:hover,
+.visual-mode-choice:focus-visible,
+.visual-mode-choice[aria-pressed="true"] {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 11%, var(--bg));
+}
+
+.visual-mode-copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.visual-mode-copy strong {
+  color: var(--ink);
+  font: 500 13px/1.1 var(--body);
+  letter-spacing: 0;
+}
+
+.visual-mode-copy small {
+  max-width: 21ch;
+  color: var(--muted);
+  font: 8px/1.35 var(--utility);
+  letter-spacing: 0.03em;
+}
+
+.visual-mode-state {
+  color: currentColor;
+  font: 7px/1 var(--utility);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.visual-mode-preview {
+  position: relative;
+  display: block;
+  width: 92px;
+  height: 68px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--hairline));
+  background: var(--bg);
+}
+
+.preview-hex::before,
+.preview-hex::after {
+  content: "";
+  position: absolute;
+  inset: 12px 24px;
+  border: 1px solid var(--accent);
+  clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--secondary) 45%, transparent);
+}
+
+.preview-hex::after {
+  inset: 18px 30px;
+  border-color: var(--highlight);
+  opacity: 0.5;
+}
+
+.preview-hex i {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 7px var(--accent);
+}
+
+.preview-hex i:nth-child(1) { top: 9px; left: 44px; }
+.preview-hex i:nth-child(2) { right: 18px; bottom: 14px; }
+.preview-hex i:nth-child(3) { bottom: 10px; left: 26px; }
+
+.preview-liquid {
+  background:
+    linear-gradient(90deg, transparent 49%, color-mix(in srgb, var(--accent) 18%, transparent) 50%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, color-mix(in srgb, var(--accent) 16%, transparent) 50%, transparent 51%),
+    var(--bg);
+  background-size: 19px 19px;
+}
+
+.preview-liquid::before {
+  content: "";
+  position: absolute;
+  inset: 11px 24px 9px 20px;
+  border-radius: 43% 57% 48% 52% / 55% 38% 62% 45%;
+  background:
+    linear-gradient(128deg, var(--primary), var(--highlight) 38%, var(--secondary) 52%, var(--accent) 72%, var(--primary));
+  filter: contrast(1.2) saturate(1.1);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--secondary) 42%, transparent);
+  transform: skewX(-7deg);
+}
+
+.preview-liquid::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 7px;
+  top: 20px;
+  left: 31px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  filter: blur(2px);
+  transform: rotate(-28deg);
+}
+
+.visual-mode-note {
+  margin: 0;
+  padding: 11px 10px 3px;
+  color: var(--muted);
+  font: 7px/1.35 var(--utility);
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 
 .visual-mode-heading {
@@ -1704,6 +1934,15 @@ html[data-ready="true"] .site-footer {
 }
 
 @media (max-width: 620px) {
+  body[data-mode-menu-open="true"] {
+    overflow: hidden;
+  }
+
+  body[data-mode-menu-open="true"] .visual-stage {
+    z-index: 70;
+    overflow: visible;
+  }
+
   .masthead {
     min-height: 70px;
     padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 12px max(14px, env(safe-area-inset-left));
@@ -1772,11 +2011,54 @@ html[data-ready="true"] .site-footer {
   }
 
   .visual-mode-menu {
-    width: min(330px, calc(100vw - 84px));
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: min(78svh, 620px);
+    padding: 12px max(14px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    overflow-y: auto;
+    border-width: 1px 0 0;
+    background: var(--bg);
+    box-shadow: 0 -24px 70px rgba(0, 0, 0, 0.58);
+    clip-path: none;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .visual-mode-backdrop {
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(5px);
+  }
+
+  .visual-mode-choice {
+    min-height: 104px;
+    grid-template-columns: 108px minmax(0, 1fr) auto;
+  }
+
+  .visual-mode-options,
+  .visual-mode-choice {
+    background-color: var(--bg);
+  }
+
+  .visual-mode-choice[aria-pressed="true"] {
+    background-color: color-mix(in srgb, var(--accent) 13%, var(--bg));
+  }
+
+  .visual-mode-preview {
+    width: 108px;
+    height: 78px;
   }
 
   .visual-mode-control summary {
     min-height: 42px;
+  }
+
+  .visual-stage[data-visual-mode="liquid-chrome"] .visual-anchor {
+    bottom: 46px;
+    width: min(72vw, 330px);
   }
 
   .fullscreen-button {

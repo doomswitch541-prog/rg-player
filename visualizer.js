@@ -1,3 +1,5 @@
+import { LiquidChromeRenderer } from "./liquid-chrome.js?v=20260903-1";
+
 const TAU = Math.PI * 2;
 
 export const VISUAL_OBJECT_SIGNAL_CONTRACT = Object.freeze({
@@ -133,7 +135,7 @@ function pointOnOrbit(centerX, centerY, radiusX, radiusY, angle) {
 }
 
 export class ArtworkVisualizer {
-  constructor({ canvas, audio, stage, meters }) {
+  constructor({ canvas, liquidCanvas, liquidFallbackCanvas, audio, stage, meters }) {
     this.canvas = canvas;
     this.audio = audio;
     this.stage = stage;
@@ -159,7 +161,7 @@ export class ArtworkVisualizer {
     this.visualTreble = 0;
     this.rawEnergy = 0;
     this.intensity = 1.72;
-    this.mode = "balanced";
+    this.mode = "hex-field";
     this.audioEnergy = 0;
     this.audioFlux = 0;
     this.bandMotion = 0;
@@ -226,6 +228,12 @@ export class ArtworkVisualizer {
     this.source = null;
     this.frequencyData = null;
     this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.liquidRenderer = new LiquidChromeRenderer({
+      webglCanvas: liquidCanvas,
+      fallbackCanvas: liquidFallbackCanvas,
+      stage,
+      reducedMotion: this.reducedMotion
+    });
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(stage);
     this.resize();
@@ -271,6 +279,11 @@ export class ArtworkVisualizer {
     this.paletteMonochrome = Math.max(0, Math.min(1, (0.34 - averageSaturation) / 0.34));
     this.signalColors = this.createSignalColors(colors);
     this.stage.dataset.paletteMonochrome = this.paletteMonochrome.toFixed(3);
+    this.liquidRenderer.setPalette(this.palette);
+  }
+
+  setArtwork(url) {
+    this.liquidRenderer.setArtwork(url);
   }
 
   setTrack(index, count = 7, trackId = null) {
@@ -305,8 +318,9 @@ export class ArtworkVisualizer {
   }
 
   setMode(mode) {
-    this.mode = ["balanced", "melody", "impact"].includes(mode) ? mode : "balanced";
+    this.mode = ["hex-field", "liquid-chrome"].includes(mode) ? mode : "hex-field";
     this.stage.dataset.visualMode = this.mode;
+    this.liquidRenderer.setActive(this.mode === "liquid-chrome");
   }
 
   setTelemetryEnabled(enabled) {
@@ -335,7 +349,7 @@ export class ArtworkVisualizer {
       return active;
     }, []);
 
-    const melodyMix = this.mode === "melody" ? 0.22 : 0.06;
+    const melodyMix = this.mode === "liquid-chrome" ? 0.18 : 0.06;
     const ringArticulation = Math.min(1,
       this.visualMids * 0.45
       + this.visualTreble * 0.23
@@ -517,6 +531,7 @@ export class ArtworkVisualizer {
     this.pixelRatio = ratio;
     this.width = bounds.width;
     this.height = bounds.height;
+    this.liquidRenderer.resize(bounds.width, bounds.height, ratio);
   }
 
   triggerCornerSweep(time, reason, strength) {
@@ -754,7 +769,7 @@ export class ArtworkVisualizer {
     const targetPaletteVelocity = playing
       ? 0.008 + this.rawEnergy * 0.05 + this.bandMotion * 2.35 + this.audioFlux * 2.6 + this.impactEnergy * 3.4
         + Math.max(0, this.transientDrive - 0.5) * 0.025
-        + (this.mode === "melody" ? this.melodyMotion * 0.24 + this.melodyPresence * 0.004 : 0)
+        + (this.mode === "liquid-chrome" ? this.melodyMotion * 0.16 + this.melodyPresence * 0.004 : 0)
       : 0.006;
     this.paletteVelocity = followBand(this.paletteVelocity, targetPaletteVelocity, 0.34, 0.075);
     const motionScale = this.reducedMotion ? 0.3 : 1;
@@ -798,6 +813,18 @@ export class ArtworkVisualizer {
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     ctx.clearRect(0, 0, this.width, this.height);
 
+    if (this.mode === "liquid-chrome") {
+      this.liquidRenderer.render(time, {
+        bass: this.visualBass,
+        mids: this.visualMids,
+        treble: this.visualTreble,
+        transient: this.transientDrive,
+        melody: this.melodyPresence,
+        palettePhase: this.palettePhase
+      });
+      return;
+    }
+
     const centerX = this.width / 2;
     const centerY = this.height / 2;
     const smallest = Math.min(this.width, this.height);
@@ -824,14 +851,9 @@ export class ArtworkVisualizer {
     const treble = this.visualTreble;
     const transientAccent = Math.max(0, this.transientDrive - 0.5) * 0.02;
     const punch = Math.min(0.08, this.impactEnergy * 1.4 + this.audioFlux * 0.18 + transientAccent);
-    const fieldProfiles = {
-      balanced: { base: 1.36, cap: 1.74, bass: 0.21, mids: 0.115, melody: 0.03, punch: 1.02 },
-      melody: { base: 1.37, cap: 1.76, bass: 0.17, mids: 0.1, melody: 0.12, punch: 0.82 },
-      impact: { base: 1.35, cap: 1.76, bass: 0.255, mids: 0.085, melody: 0.015, punch: 1.22 }
-    };
-    const profile = fieldProfiles[this.mode] || fieldProfiles.balanced;
+    const profile = { base: 1.36, cap: 1.74, bass: 0.21, mids: 0.115, melody: 0.03, punch: 1.02 };
     const melodicLift = this.melodyPresence * profile.melody
-      + (this.mode === "melody" ? Math.min(0.025, this.melodyMotion * 1.6) : 0);
+      + Math.min(0.008, this.melodyMotion * 0.42);
     const fieldTarget = Math.min(profile.cap,
       profile.base
       + bass * profile.bass
@@ -857,7 +879,7 @@ export class ArtworkVisualizer {
         bin * 0.055
         + band * 0.05
         + punch * 0.14
-        + (this.mode === "melody" ? this.melodyPresence * 0.018 : 0)
+        + this.melodyPresence * 0.006
       );
       vertices.push({
         x: centerX + Math.cos(angle) * radius,
@@ -1055,7 +1077,7 @@ export class ArtworkVisualizer {
     const paletteColors = this.getSignalColors();
     const signalColors = paletteColors.length > 4 ? paletteColors.slice(2) : paletteColors;
     const spectrumColor = colorAt(signalColors, this.palettePhase + 0.38);
-    const melodicArticulation = this.mode === "melody" ? this.melodyPresence : this.melodyPresence * 0.12;
+    const melodicArticulation = this.melodyPresence * 0.12;
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(rotation);

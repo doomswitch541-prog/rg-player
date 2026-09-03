@@ -1,4 +1,4 @@
-import { ArtworkVisualizer } from "./visualizer.js?v=20260902-2";
+import { ArtworkVisualizer } from "./visualizer.js?v=20260903-2";
 import { resolveReleaseArtwork, resolveTrackAudio } from "./media-provider.js?v=20260901-3";
 
 const elements = {
@@ -14,6 +14,8 @@ const elements = {
   railTrackCount: document.querySelector("#rail-track-count"),
   stage: document.querySelector("#visual-stage"),
   canvas: document.querySelector("#visualizer-canvas"),
+  liquidCanvas: document.querySelector("#liquid-chrome-canvas"),
+  liquidFallbackCanvas: document.querySelector("#liquid-chrome-fallback"),
   artWash: document.querySelector("#art-wash"),
   stageCover: document.querySelector("#stage-cover"),
   releaseYear: document.querySelector("#release-year"),
@@ -48,8 +50,11 @@ const elements = {
   queueBackdrop: document.querySelector("#queue-backdrop"),
   intensityButtons: [...document.querySelectorAll("[data-intensity]")],
   visualModeControl: document.querySelector("#visual-mode-control"),
+  visualModeSummary: document.querySelector("#visual-mode-summary"),
   visualModeLabel: document.querySelector("#visual-mode-label"),
   visualModeButtons: [...document.querySelectorAll("[data-visual-mode]")],
+  visualModeBackdrop: document.querySelector("#visual-mode-backdrop"),
+  visualModeClose: document.querySelector("#visual-mode-close"),
   fullscreenButton: document.querySelector("#fullscreen-button"),
   toast: document.querySelector("#toast"),
   themeColor: document.querySelector('meta[name="theme-color"]'),
@@ -66,12 +71,14 @@ const state = {
   wasPlayingBeforeSeek: false,
   lastVolume: 0.82,
   visualIntensity: "high",
-  visualMode: "balanced",
+  visualMode: "hex-field",
   toastTimer: null
 };
 
 const visualizer = new ArtworkVisualizer({
   canvas: elements.canvas,
+  liquidCanvas: elements.liquidCanvas,
+  liquidFallbackCanvas: elements.liquidFallbackCanvas,
   audio: elements.audio,
   stage: elements.stage,
   meters: {
@@ -167,25 +174,43 @@ function setVisualIntensity(mode, { persist = true } = {}) {
 
 function setVisualMode(mode, { persist = true } = {}) {
   const modes = {
-    balanced: "Balanced",
-    melody: "Melody",
-    impact: "Impact"
+    "hex-field": "Hex Field",
+    "liquid-chrome": "Liquid Chrome"
   };
-  const normalized = Object.hasOwn(modes, mode) ? mode : "balanced";
+  const normalized = Object.hasOwn(modes, mode) ? mode : "hex-field";
   state.visualMode = normalized;
   visualizer.setMode(normalized);
   elements.visualModeLabel.textContent = modes[normalized];
   elements.visualModeButtons.forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.visualMode === normalized));
+    const active = button.dataset.visualMode === normalized;
+    button.setAttribute("aria-pressed", String(active));
+    const stateLabel = button.querySelector(".visual-mode-state");
+    if (stateLabel) stateLabel.textContent = active ? "Active" : "View";
   });
-  elements.visualModeControl.open = false;
+  const menuWasOpen = elements.visualModeControl.open;
+  setModeMenuOpen(false, { restoreFocus: menuWasOpen });
 
   if (persist) {
     try {
       localStorage.setItem("rg-player-visual-mode", normalized);
     } catch {
-      // The preference is optional; Balanced remains the default.
+      // The preference is optional; Hex Field remains the default.
     }
+  }
+}
+
+function setModeMenuOpen(open, { restoreFocus = false } = {}) {
+  const expanded = Boolean(open);
+  elements.visualModeControl.open = expanded;
+  elements.visualModeSummary.setAttribute("aria-expanded", String(expanded));
+  document.body.dataset.modeMenuOpen = String(expanded);
+  if (expanded && window.innerWidth <= 620) {
+    requestAnimationFrame(() => {
+      const active = elements.visualModeButtons.find((button) => button.getAttribute("aria-pressed") === "true");
+      (active || elements.visualModeClose).focus({ preventScroll: true });
+    });
+  } else if (!expanded && restoreFocus) {
+    elements.visualModeSummary.focus({ preventScroll: true });
   }
 }
 
@@ -214,6 +239,7 @@ function applyPalette(release) {
   root.style.setProperty("--artwork-image", `url("${artworkPath(release)}")`);
   elements.themeColor.setAttribute("content", palette.background);
   visualizer.setPalette(palette);
+  visualizer.setArtwork(artworkPath(release));
 
   elements.paletteSwatches.replaceChildren(...palette.colors.map((color) => {
     const swatch = document.createElement("span");
@@ -489,9 +515,16 @@ function bindEvents() {
   elements.visualModeButtons.forEach((button) => {
     button.addEventListener("click", () => setVisualMode(button.dataset.visualMode));
   });
+  elements.visualModeClose.addEventListener("click", () => setModeMenuOpen(false, { restoreFocus: true }));
+  elements.visualModeBackdrop.addEventListener("click", () => setModeMenuOpen(false, { restoreFocus: true }));
+  elements.visualModeControl.addEventListener("toggle", () => {
+    const expanded = elements.visualModeControl.open;
+    elements.visualModeSummary.setAttribute("aria-expanded", String(expanded));
+    document.body.dataset.modeMenuOpen = String(expanded);
+  });
   document.addEventListener("pointerdown", (event) => {
     if (elements.visualModeControl.open && !elements.visualModeControl.contains(event.target)) {
-      elements.visualModeControl.open = false;
+      setModeMenuOpen(false);
     }
   });
   elements.seek.addEventListener("pointerdown", () => {
@@ -562,10 +595,22 @@ function bindEvents() {
     } else if (event.key.toLowerCase() === "f" && !isTyping) {
       toggleFullscreen();
     } else if (event.key === "Escape" && elements.visualModeControl.open) {
-      elements.visualModeControl.open = false;
-      elements.visualModeControl.querySelector("summary").focus({ preventScroll: true });
+      setModeMenuOpen(false, { restoreFocus: true });
     } else if (event.key === "Escape" && document.body.dataset.queueOpen === "true") {
       setQueueOpen(false, { restoreFocus: true });
+    }
+
+    if (event.key === "Tab" && elements.visualModeControl.open && window.innerWidth <= 620) {
+      const focusable = [elements.visualModeClose, ...elements.visualModeButtons].filter((item) => !item.disabled);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
   });
 
@@ -612,11 +657,11 @@ async function initialize() {
       // Keep the High default when storage is unavailable.
     }
     setVisualIntensity(savedIntensity, { persist: false });
-    let savedVisualMode = "balanced";
+    let savedVisualMode = "hex-field";
     try {
-      savedVisualMode = localStorage.getItem("rg-player-visual-mode") || "balanced";
+      savedVisualMode = localStorage.getItem("rg-player-visual-mode") || "hex-field";
     } catch {
-      // Keep the Balanced default when storage is unavailable.
+      // Keep the Hex Field default when storage is unavailable.
     }
     setVisualMode(savedVisualMode, { persist: false });
     setQueueOpen(false);

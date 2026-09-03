@@ -58,6 +58,16 @@ The full schema and rationale live in
 ## Design boundary
 
 The player shell stays graphite, mineral, and quiet. Release artwork supplies
-the expressive palette. The signature object is the artwork-centered field:
-hex scale follows low/mid body and impact; the spectrum ring carries faster
-detail; sparse chronology dots carry discrete band-mapped accents.
+the expressive palette. The same uninterrupted player now supports two local
+visual engines:
+
+- **Hex Field** keeps the artwork-centered geometry: hex scale follows low/mid
+  body and impact; the spectrum ring carries faster detail; sparse chronology
+  dots carry discrete band-mapped accents.
+- **Liquid Chrome** turns the artwork itself into reflective material. WebGL is
+  progressively enhanced over an authored Canvas fallback, with bass shaping
+  mass, mids shaping surface flow, treble shaping highlights, and transients
+  shaping brief focus trails.
+
+Visual selection changes the canvas, never the route or audio element. Add
+`?renderer=canvas` to force the Liquid Chrome fallback during QA.
