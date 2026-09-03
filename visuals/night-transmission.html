@@ -11,8 +11,8 @@
   <link rel="icon" type="image/png" href="../assets/icons/apple-touch-icon.png">
   <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="visuals.css?v=20260903-1">
-  <link rel="stylesheet" href="night-transmission.css?v=20260903-1">
-  <script type="module" src="night-transmission.js?v=20260903-1"></script>
+  <link rel="stylesheet" href="night-transmission.css?v=20260903-2">
+  <script type="module" src="night-transmission.js?v=20260903-2"></script>
 </head>
 <body class="transmission-page">
   <div class="transmission-backdrop" id="transmission-backdrop" aria-hidden="true"></div>
@@ -36,50 +36,70 @@
       <span>VIEW_01 // LIVE</span>
     </div>
 
-    <section class="transmission-hero" aria-labelledby="track-title">
-      <div class="hero-copy">
-        <p class="track-code" id="track-code">TRACK_01</p>
-        <div class="title-orbit" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-        <h1 id="track-title">Somewhere</h1>
-        <p class="hero-artist" id="artist-name">julez</p>
-        <p class="mix-chip" id="mix-name">ORIGINAL RELEASE</p>
+    <section class="transmission-console" aria-labelledby="track-title">
+      <header class="console-head">
+        <div class="console-now-playing">
+          <p class="track-code" id="track-code">TRACK_01 // LIVE ANALYSIS</p>
+          <h1 id="track-title">Somewhere</h1>
+          <div class="console-byline">
+            <p class="hero-artist" id="artist-name">julez</p>
+            <p class="mix-chip" id="mix-name">ORIGINAL RELEASE</p>
+          </div>
+        </div>
+        <div class="console-art" aria-hidden="true"><span></span></div>
+      </header>
+
+      <div class="instrument-grid" aria-label="Audio instruments">
+        <div class="instrument-stack">
+          <article class="instrument-panel waveform-panel">
+            <header><span>WAVEFORM ANALYSIS</span><span id="waveform-state">STANDBY &gt;&gt;&gt;</span></header>
+            <canvas id="waveform-canvas" aria-label="Live audio waveform"></canvas>
+          </article>
+
+          <article class="instrument-panel frequency-panel">
+            <header><span>FREQUENCY SCAN</span><span>B / M / T &gt;&gt;&gt;</span></header>
+            <canvas id="frequency-canvas" aria-label="Live frequency spectrum"></canvas>
+          </article>
+
+          <article class="instrument-panel signal-panel">
+            <header><span>SIGNAL STATUS</span><span id="signal-state">QUIET</span></header>
+            <div class="signal-gauge" aria-hidden="true"><span id="signal-fill"></span></div>
+            <div class="signal-readout"><span>LIVE LEVEL</span><strong id="signal-value">00%</strong></div>
+          </article>
+        </div>
+
+        <div class="console-side">
+          <dl class="metadata-rail" aria-label="Current track metadata">
+            <div><dt><i>AR</i>Artist</dt><dd id="meta-artist">julez</dd></div>
+            <div><dt><i>TR</i>Track</dt><dd id="meta-track">Somewhere</dd></div>
+            <div><dt><i>RL</i>Release</dt><dd id="meta-release">Somewhere — Single</dd></div>
+            <div><dt><i>YR</i>Year</dt><dd id="meta-year">2024</dd></div>
+            <div><dt><i>GN</i>Genre</dt><dd id="meta-genre">Downtempo</dd></div>
+            <div><dt><i>RT</i>Runtime</dt><dd id="meta-runtime">1:32</dd></div>
+          </dl>
+
+          <aside class="archive-notes">
+            <header><span aria-hidden="true">✦</span> SOURCE // NOTES</header>
+            <p id="rights-note">All rights go to julez.</p>
+            <a id="source-link" href="https://www.youtube.com/" target="_blank" rel="noopener">Official source ↗</a>
+            <div class="archive-state"><span>ARCHIVE STATE</span><strong id="playback-status">READY TO PLAY</strong></div>
+          </aside>
+        </div>
       </div>
 
-      <dl class="metadata-rail" aria-label="Current track metadata">
-        <div><dt><i>AR</i>Artist</dt><dd id="meta-artist">julez</dd></div>
-        <div><dt><i>TR</i>Track</dt><dd id="meta-track">Somewhere</dd></div>
-        <div><dt><i>RL</i>Release</dt><dd id="meta-release">Somewhere — Single</dd></div>
-        <div><dt><i>YR</i>Year</dt><dd id="meta-year">2024</dd></div>
-        <div><dt><i>GN</i>Genre</dt><dd id="meta-genre">Downtempo</dd></div>
-        <div><dt><i>RT</i>Runtime</dt><dd id="meta-runtime">1:32</dd></div>
-      </dl>
-    </section>
-
-    <section class="instrument-grid" aria-label="Audio instruments">
-      <div class="instrument-stack">
-        <article class="instrument-panel waveform-panel">
-          <header><span>WAVEFORM ANALYSIS</span><span id="waveform-state">STANDBY &gt;&gt;&gt;</span></header>
-          <canvas id="waveform-canvas" aria-label="Live audio waveform"></canvas>
-        </article>
-
-        <article class="instrument-panel frequency-panel">
-          <header><span>FREQUENCY SCAN</span><span>B / M / T &gt;&gt;&gt;</span></header>
-          <canvas id="frequency-canvas" aria-label="Live frequency spectrum"></canvas>
-        </article>
-
-        <article class="instrument-panel signal-panel">
-          <header><span>SIGNAL STATUS</span><span id="signal-state">QUIET</span></header>
-          <div class="signal-gauge" aria-hidden="true"><span id="signal-fill"></span></div>
-          <div class="signal-readout"><span>LIVE LEVEL</span><strong id="signal-value">00%</strong></div>
-        </article>
-      </div>
-
-      <aside class="archive-notes">
-        <header><span aria-hidden="true">✦</span> SOURCE // NOTES</header>
-        <p id="rights-note">All rights go to julez.</p>
-        <a id="source-link" href="https://www.youtube.com/" target="_blank" rel="noopener">Official source ↗</a>
-        <div class="archive-state"><span>ARCHIVE STATE</span><strong id="playback-status">READY TO PLAY</strong></div>
-      </aside>
+      <section class="transmission-player" aria-label="Night Transmission player">
+        <div class="transmission-transport" aria-label="Playback controls">
+          <button id="previous-button" type="button" aria-label="Previous track"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5v14M18 6.5 9 12l9 5.5z"/></svg></button>
+          <button class="transmission-play" id="play-button" type="button" aria-label="Play Somewhere">
+            <svg class="transmission-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
+            <svg class="transmission-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+          </button>
+          <button id="next-button" type="button" aria-label="Next track"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 5v14M6 6.5l9 5.5-9 5.5z"/></svg></button>
+        </div>
+        <label class="track-picker"><span class="track-picker-head"><span>TRACK</span><strong id="player-track-number">01 / 04</strong></span><select id="track-select" aria-label="Choose track"></select></label>
+        <label class="transmission-seek"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Track position"><span id="duration">1:32</span></label>
+        <label class="transmission-volume"><span>VOL</span><input id="volume" type="range" min="0" max="1" value="0.82" step="0.01" aria-label="Volume"><output id="volume-value">82</output></label>
+      </section>
     </section>
 
     <section class="physical-media" aria-label="Current release artwork">
@@ -96,20 +116,6 @@
       </div>
     </section>
   </main>
-
-  <section class="transmission-player" aria-label="Night Transmission player">
-    <div class="transmission-transport" aria-label="Playback controls">
-      <button id="previous-button" type="button" aria-label="Previous track"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5v14M18 6.5 9 12l9 5.5z"/></svg></button>
-      <button class="transmission-play" id="play-button" type="button" aria-label="Play Somewhere">
-        <svg class="transmission-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
-        <svg class="transmission-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
-      </button>
-      <button id="next-button" type="button" aria-label="Next track"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 5v14M6 6.5l9 5.5-9 5.5z"/></svg></button>
-    </div>
-    <label class="track-picker"><span class="track-picker-head"><span>TRACK</span><strong id="player-track-number">01 / 04</strong></span><select id="track-select" aria-label="Choose track"></select></label>
-    <label class="transmission-seek"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Track position"><span id="duration">1:32</span></label>
-    <label class="transmission-volume"><span>VOL</span><input id="volume" type="range" min="0" max="1" value="0.82" step="0.01" aria-label="Volume"><output id="volume-value">82</output></label>
-  </section>
 
   <audio id="audio" preload="auto" playsinline></audio>
 </body>

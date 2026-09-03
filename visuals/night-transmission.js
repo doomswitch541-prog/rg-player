@@ -3,7 +3,7 @@ import { resolveReleaseArtwork, resolveTrackAudio } from "../media-provider.js?v
 const elements = {
   audio: document.querySelector("#audio"),
   backdrop: document.querySelector("#transmission-backdrop"),
-  heroCopy: document.querySelector(".hero-copy"),
+  nowPlaying: document.querySelector(".console-now-playing"),
   trackCode: document.querySelector("#track-code"),
   trackTitle: document.querySelector("#track-title"),
   artistName: document.querySelector("#artist-name"),
@@ -109,7 +109,7 @@ function applyTrack(index, { autoplay = false, updateUrl = true } = {}) {
   state.currentIndex = nextIndex;
   elements.trackCode.textContent = `TRACK_${String(nextIndex + 1).padStart(2, "0")}`;
   elements.trackTitle.textContent = track.title;
-  elements.heroCopy.dataset.titleScale = track.title.length > 18 ? "compact" : "display";
+  elements.nowPlaying.dataset.titleScale = track.title.length > 18 ? "compact" : "display";
   elements.artistName.textContent = track.artist;
   elements.mixName.textContent = versionName(track, release);
   elements.metaArtist.textContent = track.artist;
